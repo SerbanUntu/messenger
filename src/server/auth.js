@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken')
 const { doesUserExist } = require('./db')
 
 const handleAuth = async (req, res, next) => {
-	const token = req.cookies.token
+	const token = req.cookies.messenger_jwt
 	const ignoredRoutes = ['/login', '/sign-up', '/api/v1/login', '/api/v1/users']
 
 	if (ignoredRoutes.includes(req.path)) {

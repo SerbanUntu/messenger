@@ -20,15 +20,13 @@ app.use((req, _, next) => {
 
 app.use(express.static(path.join(__dirname, '..', '..', 'dist')))
 
-// Public routes first
+app.use('/app', handleAuth)
+
 app.post('/api/v1/users', validateUser, createUser)
 app.post('/api/v1/login', validateUser, loginUser)
 
-// Auth middleware for protected routes
-app.use(handleAuth)
-
 // Catch-all route for SPA
-app.use('/*', (_, res) => {
+app.get('/*', (_, res) => {
 	res.sendFile(path.join(__dirname, '..', '..', 'dist', 'index.html'))
 })
 

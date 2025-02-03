@@ -1,5 +1,12 @@
 import React from 'react'
 
 export default function SignUp() {
-	return <p className="text-gray-500">Sign up</p>
+
+	return (
+		<form>
+			<input type="text" placeholder="Username" />
+			<input type="password" placeholder="Password" />
+			<button type="submit">Sign Up</button>
+		</form>
+	)
 }

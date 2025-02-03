@@ -31,7 +31,7 @@ const loginUser = async (req, res) => {
 			res.status(401).json({ error: 'Invalid username or password' })
 		} else {
 			const token = generateToken({ user_id: result.rows[0].user_id })
-			res.cookie('token', token, {
+			res.cookie('messenger_jwt', token, {
 				httpOnly: true,
 				sameSite: 'strict',
 				maxAge: 30 * 24 * 60 * 60 * 1000,
