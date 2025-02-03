@@ -1,37 +1,17 @@
-import React, { useState } from 'react'
+import React from 'react'
+import UserForm from '@/src/components/userForm'
+import { NavLink } from 'react-router'
 
 export default function SignUp() {
-	const [username, setUsername] = useState('')
-	const [password, setPassword] = useState('')
-
 	return (
-		<form
-			onSubmit={e => {
-				e.preventDefault()
-				fetch('/api/v1/users', {
-					method: 'POST',
-					body: JSON.stringify({
-						username,
-						password,
-					}),
-					headers: {
-						'Content-Type': 'application/json',
-					},
-				})
-			}}>
-			<input
-				type="text"
-				placeholder="Username"
-				value={username}
-				onChange={e => setUsername(e.target.value)}
-			/>
-			<input
-				type="password"
-				placeholder="Password"
-				value={password}
-				onChange={e => setPassword(e.target.value)}
-			/>
-			<button type="submit">Sign Up</button>
-		</form>
+		<div className="min-h-screen flex flex-col gap-4 items-center justify-center bg-gradient-to-br from-black to-blue-950">
+			<UserForm buttonText="Sign Up" action="/api/v1/users" />
+			<p className="text-gray-500 text-sm">
+				Already have an account?{' '}
+				<NavLink to="/login" className="text-blue-500 hover:underline">
+					Login
+				</NavLink>
+			</p>
+		</div>
 	)
 }

@@ -5,10 +5,16 @@ const { createUser, loginUser } = require('./queries')
 const { validateUser } = require('./validations')
 const { handleAuth } = require('./auth')
 const express = require('express')
+const cors = require('cors')
 const cookieParser = require('cookie-parser')
 const app = express()
 
-//app.use(cors())
+// Enable CORS for requests coming from your client (http://localhost:8080)
+app.use(cors({
+	origin: 'http://localhost:8080',
+	credentials: true, // Only necessary if you intend to send cookies in cross-origin requests.
+}))
+
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
