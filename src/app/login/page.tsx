@@ -11,8 +11,8 @@ export default function Login() {
 				fetch('/api/v1/login', {
 					method: 'POST',
 					body: JSON.stringify({
-						username: username,
-						password: password,
+						username,
+						password,
 					}),
 					headers: {
 						'Content-Type': 'application/json',

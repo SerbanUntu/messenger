@@ -1,14 +1,9 @@
 const jwt = require('jsonwebtoken')
 const { doesUserExist } = require('./db')
+const { createHash } = require('crypto')
 
 const handleAuth = async (req, res, next) => {
 	const token = req.cookies.messenger_jwt
-	const ignoredRoutes = ['/login', '/sign-up', '/api/v1/login', '/api/v1/users']
-
-	if (ignoredRoutes.includes(req.path)) {
-		next()
-		return
-	}
 
 	if (!token) {
 		res.status(401).json({ error: 'No token specified' })
@@ -32,4 +27,9 @@ const generateToken = payload => {
 	return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' })
 }
 
-module.exports = { handleAuth, generateToken }
+const getEncryptedPassword = (unencrypted, username) => {
+	const hashed = createHash('sha256').update(unencrypted).digest('base64')
+	return createHash('sha256').update(hashed).update(username).digest('base64')
+}
+
+module.exports = { handleAuth, generateToken, getEncryptedPassword }

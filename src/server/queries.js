@@ -1,11 +1,12 @@
 const { pool } = require('./db')
-const { generateToken } = require('./auth')
+const { generateToken, getEncryptedPassword } = require('./auth')
 
 const createUser = async (req, res) => {
 	try {
+		const encryptedPassword = getEncryptedPassword(req.body.password, req.body.username);
 		const result = await pool.query(
 			'INSERT INTO users(username, password, created_at) VALUES ($1, $2, $3) RETURNING user_id, username, created_at',
-			[req.body.username, req.body.password, new Date()],
+			[req.body.username, encryptedPassword, new Date()],
 		)
 
 		res.status(201).json(result.rows[0])
@@ -22,9 +23,10 @@ const createUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
 	try {
+		const encryptedPassword = getEncryptedPassword(req.body.password, req.body.username);
 		const result = await pool.query('SELECT * FROM users WHERE username = $1 AND password = $2', [
 			req.body.username,
-			req.body.password,
+			encryptedPassword
 		])
 
 		if (result.rows.length === 0) {
@@ -37,6 +39,10 @@ const loginUser = async (req, res) => {
 				maxAge: 30 * 24 * 60 * 60 * 1000,
 			})
 			res.status(200).json({ message: 'Logged in successfully' })
+			await pool.query('UPDATE users SET last_login = $1 WHERE user_id = $2', [
+				new Date(),
+				result.rows[0].user_id
+			])
 		}
 	} catch (error) {
 		console.error('Database error:', error)
