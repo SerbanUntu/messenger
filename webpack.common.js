@@ -30,7 +30,11 @@ module.exports = {
 				use: {
 					loader: 'babel-loader',
 					options: {
-						presets: ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'],
+						presets: [
+							'@babel/preset-env',
+							['@babel/preset-react', { runtime: 'automatic' }],
+							'@babel/preset-typescript'
+						],
 					},
 				},
 			},
@@ -51,7 +55,7 @@ module.exports = {
 	plugins: [
 		new HtmlWebpackPlugin({
 			template: './index.html',
-			// favicon: './favicon.ico',
+			favicon: './public/favicon.ico',
 		}),
 	],
 }
