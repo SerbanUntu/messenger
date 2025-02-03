@@ -2,12 +2,23 @@ const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 module.exports = {
-	entry: './index.js',
+	entry: './src/index.js',
 	module: {
 		rules: [
 			{
 				test: /\.css$/i,
-				use: ['style-loader', 'css-loader', "postcss-loader"],
+				use: [
+					'style-loader',
+					'css-loader',
+					{
+						loader: 'postcss-loader',
+						options: {
+							postcssOptions: {
+								plugins: ['postcss-preset-env', 'autoprefixer', '@tailwindcss/postcss'],
+							},
+						},
+					},
+				],
 			},
 			{
 				test: /\.(png|svg|jpg|jpeg|gif)$/i,
