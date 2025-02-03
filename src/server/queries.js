@@ -1,13 +1,5 @@
-const pg = require('pg')
-
-const pool = new pg.Pool({
-	host: process.env.DB_HOST,
-	port: process.env.DB_PORT,
-	user: process.env.DB_USER,
-	password: process.env.DB_PASSWORD,
-	database: process.env.DB_NAME,
-	max: 10,
-})
+const { pool } = require('./db')
+const { generateToken } = require('./auth')
 
 const createUser = async (req, res) => {
 	try {
@@ -28,4 +20,28 @@ const createUser = async (req, res) => {
 	}
 }
 
-module.exports = { createUser }
+const loginUser = async (req, res) => {
+	try {
+		const result = await pool.query('SELECT * FROM users WHERE username = $1 AND password = $2', [
+			req.body.username,
+			req.body.password,
+		])
+
+		if (result.rows.length === 0) {
+			res.status(401).json({ error: 'Invalid username or password' })
+		} else {
+			const token = generateToken({ user_id: result.rows[0].user_id })
+			res.cookie('token', token, {
+				httpOnly: true,
+				sameSite: 'strict',
+				maxAge: 30 * 24 * 60 * 60 * 1000,
+			})
+			res.status(200).json({ message: 'Logged in successfully' })
+		}
+	} catch (error) {
+		console.error('Database error:', error)
+		res.status(500).json({ error: error.toString() })
+	}
+}
+
+module.exports = { createUser, loginUser }
