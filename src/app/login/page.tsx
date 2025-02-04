@@ -1,12 +1,14 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import UserForm from '@/src/components/userForm'
 import { NavLink } from 'react-router'
 import { server } from '@/src/constants'
 import { toast } from '@/src/hooks/use-toast'
 import { useNavigate } from 'react-router'
+import UserContext from '@/src/contexts/user-context'
 
 export default function Login() {
 	const navigate = useNavigate()
+	const { setUser } = useContext(UserContext)
 
 	const onSubmit = async (e: React.FormEvent, username: string, password: string) => {
 		e.preventDefault()
@@ -29,6 +31,8 @@ export default function Login() {
 				description: 'You are now logged in',
 				variant: 'success',
 			})
+			const data = await res.json()
+			setUser(data)
 			navigate('/dashboard')
 		} else {
 			const data = await res.json()

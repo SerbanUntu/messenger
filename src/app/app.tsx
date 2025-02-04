@@ -13,7 +13,7 @@ import Root from './root'
 
 const App = () => {
 	const [user, setUser] = useState<User | null>(null)
-	const [isLoading, setIsLoading] = useState(true)
+	const [isUserLoading, setIsUserLoading] = useState(true)
 
 	useEffect(() => {
 		const userPromise = fetch(server + '/api/v1/users/currentUser', {
@@ -23,17 +23,17 @@ const App = () => {
 			if (res.ok) {
 				res.json().then(user => {
 					setUser(user)
-					setIsLoading(false)
+					setIsUserLoading(false)
 				})
 			} else {
 				setUser(null)
-				setIsLoading(false)
+				setIsUserLoading(false)
 			}
 		})
 	}, [])
 
 	return (
-		<UserContext.Provider value={[user, isLoading]}>
+		<UserContext.Provider value={{ user, setUser, isUserLoading, setIsUserLoading }}>
 			<BrowserRouter>
 				<Routes>
 					<Route element={<Root />}>

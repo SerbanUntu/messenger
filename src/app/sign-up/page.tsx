@@ -31,7 +31,7 @@ export default function SignUp() {
 			const data = await res.json()
 			console.log(data)
 			toast({
-				title: 'Login failed',
+				title: 'Sign up failed',
 				description: data.error,
 				variant: 'destructive',
 			})

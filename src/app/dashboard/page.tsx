@@ -10,7 +10,7 @@ export default function Dashboard() {
 	const navigate = useNavigate()
 	const [selectedChat, setSelectedChat] = useState(0)
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-	const [user, isLoading] = useContext(UserContext)
+	const { user, isUserLoading } = useContext(UserContext)
 
 	const handleLogOut = async () => {
 		await fetch(server + '/api/v1/logout', {
@@ -25,13 +25,12 @@ export default function Dashboard() {
 	}
 
 	useEffect(() => {
-		if (!user && !isLoading) {
+		if (!user && isUserLoading) {
 			navigate('/login')
 		}
-	}, [user, isLoading])
+	}, [user, isUserLoading])
 
 	// Dummy data for demonstration
-
 	const chats = [
 		{ id: 0, name: 'alice_smith', lastMessage: 'See you tomorrow!', time: '10:30 AM', unread: 5 },
 		{ id: 1, name: 'bob_johnson', lastMessage: 'Thanks for the help!', time: '9:15 AM', unread: 0 },
