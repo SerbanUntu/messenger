@@ -3,7 +3,7 @@ import { Send, Server, Users, Zap } from 'lucide-react'
 
 export default function Landing() {
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-[#0a0f1c] to-[#1a1f3c]">
+		<div className="min-h-screen bg-gradient-to-br from-dark-navy to-light-navy">
 			<header className="px-4 lg:px-6 h-14 flex items-center">
 				<NavLink className="flex items-center justify-center" to="/dashboard">
 					<Send className="h-6 w-6 text-messenger-blue" />
@@ -82,7 +82,7 @@ export default function Landing() {
 					</div>
 				</section>
 			</main>
-			<footer className="w-full border-t border-gray-700 py-6 bg-[#0a0f1c]">
+			<footer className="w-full border-t border-gray-700 py-6 bg-dark-navy">
 				<div className="container flex flex-col items-center justify-between gap-4 px-4 text-center md:px-6">
 					<p className="text-sm text-gray-400">{`© ${new Date().getFullYear()} Șerban Untu. All rights reserved.`}</p>
 				</div>
