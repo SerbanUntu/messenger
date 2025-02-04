@@ -1,6 +1,6 @@
 const pg = require('pg')
 
-const pool = new pg.Pool({
+const db = new pg.Pool({
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     user: process.env.DB_USER,
@@ -9,9 +9,9 @@ const pool = new pg.Pool({
     max: 10,
 })
 
-const doesUserExist = async (id) => {
-    const result = await pool.query('SELECT * FROM users WHERE user_id = $1', [id])
-    return result.rows.length > 0
+const getUserById = async (id) => {
+    const result = await db.query('SELECT user_id, username FROM users WHERE user_id = $1', [id])
+    return result.rows[0]
 }
 
-module.exports = { pool, doesUserExist } 
+module.exports = { db, getUserById }

@@ -1,8 +1,8 @@
 const jwt = require('jsonwebtoken')
-const { doesUserExist } = require('./db')
+const { getUserById } = require('./db')
 const { createHash } = require('crypto')
 
-const handleAuth = async (req, res, next) => {
+const authUser = async (req, res, next) => {
 	const token = req.cookies.messenger_jwt
 
 	if (!token) {
@@ -11,13 +11,19 @@ const handleAuth = async (req, res, next) => {
 	}
 
 	try {
-		const decoded = jwt.verify(token, process.env.JWT_SECRET)
-		const userExists = await doesUserExist(decoded.user_id)
-		if (!userExists) {
-			res.status(401).json({ error: 'User does not exist' })
-			return
-		}
+		jwt.verify(token, process.env.JWT_SECRET)
 		next()
+	} catch (err) {
+		res.status(401).json({ error: err.message })
+	}
+}
+
+const getCurrentUser = async (req, res) => {
+	const token = req.cookies.messenger_jwt
+	try {
+		const decoded = jwt.verify(token, process.env.JWT_SECRET)
+		const user = await getUserById(decoded.user_id)
+		res.status(200).json(user)
 	} catch (err) {
 		res.status(401).json({ error: err.message })
 	}
@@ -32,4 +38,4 @@ const getEncryptedPassword = (unencrypted, username) => {
 	return createHash('sha256').update(hashed).update(username).digest('base64')
 }
 
-module.exports = { handleAuth, generateToken, getEncryptedPassword }
+module.exports = { authUser, getCurrentUser, generateToken, getEncryptedPassword }

@@ -1,12 +1,11 @@
 import { NavLink } from 'react-router'
 import { Send, Server, Users, Zap } from 'lucide-react'
-import { Button } from '@/src/components/ui/button'
 
 export default function Landing() {
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-[#0a0f1c] to-[#1a1f3c]">
 			<header className="px-4 lg:px-6 h-14 flex items-center">
-				<NavLink className="flex items-center justify-center" to="/app">
+				<NavLink className="flex items-center justify-center" to="/dashboard">
 					<Send className="h-6 w-6 text-messenger-blue" />
 					<span className="ml-2 text-xl font-bold text-white">Messenger</span>
 				</NavLink>

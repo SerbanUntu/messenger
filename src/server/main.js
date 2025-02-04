@@ -1,9 +1,9 @@
 const path = require('path')
 require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') })
 
-const { createUser, loginUser } = require('./queries')
+const { createUser, loginUser } = require('./actions')
 const { validateUser } = require('./validations')
-const { handleAuth } = require('./auth')
+const { authUser, getCurrentUser } = require('./auth')
 const express = require('express')
 const cors = require('cors')
 const cookieParser = require('cookie-parser')
@@ -26,10 +26,9 @@ app.use((req, _, next) => {
 
 app.use(express.static(path.join(__dirname, '..', '..', 'dist')))
 
-app.use('/app', handleAuth)
-
 app.post('/api/v1/users', validateUser, createUser)
 app.post('/api/v1/login', validateUser, loginUser)
+app.get('/api/v1/users/currentUser', authUser, getCurrentUser)
 
 // Catch-all route for SPA
 app.get('/*', (_, res) => {

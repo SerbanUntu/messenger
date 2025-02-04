@@ -4,13 +4,12 @@ import { Button } from '@/src/components/ui/button'
 import { Input } from '@/src/components/ui/input'
 import { Label } from '@/src/components/ui/label'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/src/components/ui/card'
+import { server } from '../constants'
 
 interface UserFormProps {
 	buttonText: string
 	action: string
 }
-
-const server = 'http://localhost:3000'
 
 export default function UserForm({ buttonText, action }: UserFormProps) {
 	const [username, setUsername] = useState('')
@@ -29,10 +28,6 @@ export default function UserForm({ buttonText, action }: UserFormProps) {
 				'Content-Type': 'application/json',
 			},
 		})
-			.then(response => response.json())
-			.then(data => {
-				console.log(data)
-			})
 	}
 
 	return (
