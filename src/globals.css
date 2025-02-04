@@ -6,6 +6,11 @@
 	}
 }
 
+* {
+	scrollbar-width: thin;
+	scrollbar-color: #6B7280 transparent;
+}
+
 @variant dark (&:where(.dark, .dark *));
 
 @plugin "tailwindcss-animate";

@@ -25,7 +25,7 @@ export default function Dashboard() {
 	}
 
 	useEffect(() => {
-		if (!user && isUserLoading) {
+		if (!user && !isUserLoading) {
 			navigate('/login')
 		}
 	}, [user, isUserLoading])
@@ -50,7 +50,7 @@ export default function Dashboard() {
 	]
 
 	return (
-		<div className="flex h-screen bg-dark-navy relative">
+		<div className="flex h-screen bg-dark-navy relative overflow-hidden">
 			{/* Mobile menu button */}
 			<Button
 				variant="ghost"
@@ -60,13 +60,13 @@ export default function Dashboard() {
 				{isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
 			</Button>
 
-			{/* Sidebar - now with responsive classes */}
+			{/* Sidebar */}
 			<div
 				className={`${
 					isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-				} lg:translate-x-0 w-80 border-r border-gray-800 absolute lg:relative inset-y-0 left-0 z-40 transition-transform duration-300 ease-in-out bg-dark-navy`}>
+				} lg:translate-x-0 w-80 border-r border-gray-800 absolute lg:relative inset-y-0 left-0 z-40 transition-transform duration-300 ease-in-out bg-dark-navy flex flex-col h-screen`}>
 				{/* Header */}
-				<div className="p-4 py-[10px] border-b border-gray-800 flex items-center justify-end gap-0.5">
+				<div className="shrink-0 p-4 py-[10px] border-b border-gray-800 flex items-center justify-end gap-0.5">
 					<span className="text-white font-medium">{user?.username}</span>
 					<Button
 						variant="ghost"
@@ -79,7 +79,7 @@ export default function Dashboard() {
 				</div>
 
 				{/* Action buttons */}
-				<div className="p-4 flex gap-2">
+				<div className="shrink-0 p-4 flex gap-2">
 					<Button className="flex-1 bg-blue-500 hover:bg-blue-600 cursor-pointer">
 						<UserPlus className="h-4 w-4 mr-2" />
 						New Chat
@@ -91,7 +91,7 @@ export default function Dashboard() {
 				</div>
 
 				{/* Chats list */}
-				<div className="overflow-y-auto">
+				<div className="flex-1 overflow-y-auto">
 					{chats.map(chat => (
 						<div
 							key={chat.id}
