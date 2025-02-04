@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken')
 const { getUserById } = require('./db')
 const { createHash } = require('crypto')
 
-const authUser = async (req, res, next) => {
+const authUser = (req, res, next) => {
 	const token = req.cookies.messenger_jwt
 
 	if (!token) {
@@ -29,6 +29,11 @@ const getCurrentUser = async (req, res) => {
 	}
 }
 
+const invalidateUser = (_, res) => {
+	res.clearCookie('messenger_jwt')
+	res.status(200).json({ message: 'Cookie has been cleared' });
+}
+
 const generateToken = payload => {
 	return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' })
 }
@@ -38,4 +43,4 @@ const getEncryptedPassword = (unencrypted, username) => {
 	return createHash('sha256').update(hashed).update(username).digest('base64')
 }
 
-module.exports = { authUser, getCurrentUser, generateToken, getEncryptedPassword }
+module.exports = { authUser, getCurrentUser, invalidateUser, generateToken, getEncryptedPassword }

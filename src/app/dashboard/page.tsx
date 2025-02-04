@@ -3,12 +3,26 @@ import { Button } from '@/src/components/ui/button'
 import { LogOut, Menu, UserPlus, Users, X } from 'lucide-react'
 import UserContext from '@/src/contexts/user-context'
 import { useNavigate } from 'react-router'
+import { server } from '@/src/constants'
+import { toast } from '@/src/hooks/use-toast'
 
 export default function Dashboard() {
 	const navigate = useNavigate()
 	const [selectedChat, setSelectedChat] = useState(0)
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 	const [user, isLoading] = useContext(UserContext)
+
+	const handleLogOut = async () => {
+		await fetch(server + '/api/v1/logout', {
+			credentials: 'include',
+		})
+		toast({
+			title: 'Successfully logged out',
+			description: 'You are no longer logged in',
+			variant: 'success',
+		})
+		navigate('/login')
+	}
 
 	useEffect(() => {
 		if (!user && !isLoading) {
@@ -59,7 +73,8 @@ export default function Dashboard() {
 						variant="ghost"
 						size="icon"
 						className="text-gray-400 hover:text-white cursor-pointer hover:bg-gray-900"
-						title="Log out">
+						title="Log out"
+						onClick={handleLogOut}>
 						<LogOut className="h-5 w-5" />
 					</Button>
 				</div>
