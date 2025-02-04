@@ -4,38 +4,22 @@ import { Button } from '@/src/components/ui/button'
 import { Input } from '@/src/components/ui/input'
 import { Label } from '@/src/components/ui/label'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/src/components/ui/card'
-import { server } from '../constants'
 
 interface UserFormProps {
 	buttonText: string
-	action: string
+	onSubmit: (e: React.FormEvent, username: string, password: string) => void
 }
 
-export default function UserForm({ buttonText, action }: UserFormProps) {
+export default function UserForm({ buttonText, onSubmit }: UserFormProps) {
 	const [username, setUsername] = useState('')
 	const [password, setPassword] = useState('')
-
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault()
-		fetch(server + action, {
-			method: 'POST',
-			body: JSON.stringify({
-				username,
-				password,
-			}),
-			headers: {
-				Host: 'localhost:3000',
-				'Content-Type': 'application/json',
-			},
-		})
-	}
 
 	return (
 		<Card className="w-full max-w-md bg-gray-900 text-gray-100 border-0 shadow-lg">
 			<CardHeader>
 				<CardTitle className="text-2xl font-bold">{buttonText}</CardTitle>
 			</CardHeader>
-			<form onSubmit={handleSubmit}>
+			<form onSubmit={e => onSubmit(e, username, password)}>
 				<CardContent className="space-y-4">
 					<div className="space-y-2">
 						<Label htmlFor="username" className="text-gray-200">

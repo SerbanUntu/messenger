@@ -9,7 +9,19 @@ export default function Landing() {
 					<Send className="h-6 w-6 text-messenger-blue" />
 					<span className="ml-2 text-xl font-bold text-white">Messenger</span>
 				</NavLink>
+				<nav className="ml-auto flex gap-4 sm:gap-6">
+					<NavLink className="text-sm font-medium text-gray-400 hover:text-white" to="/dashboard">
+						App
+					</NavLink>
+					<NavLink className="text-sm font-medium text-gray-400 hover:text-white" to="/login">
+						Log in
+					</NavLink>
+					<NavLink className="text-sm font-medium text-gray-400 hover:text-white" to="/sign-up">
+						Sign up
+					</NavLink>
+				</nav>
 			</header>
+
 			<main className="flex-1">
 				<section className="w-full py-12 md:py-24 lg:py-32 xl:py-48">
 					<div className="container px-4 md:px-6">

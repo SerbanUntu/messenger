@@ -9,6 +9,7 @@ import Dashboard from './dashboard/page'
 import { User } from '../types'
 import UserContext from '../contexts/user-context'
 import { server } from '../constants'
+import Root from './root'
 
 const App = () => {
 	const [user, setUser] = useState<User | null>(null)
@@ -35,11 +36,13 @@ const App = () => {
 		<UserContext.Provider value={[user, isLoading]}>
 			<BrowserRouter>
 				<Routes>
-					<Route path="/" element={<Landing />} />
-					<Route path="/dashboard" element={<Dashboard />} />
-					<Route path="/sign-up" element={<SignUp />} />
-					<Route path="/login" element={<Login />} />
-					<Route path="*" element={<NotFound />} />
+					<Route element={<Root />}>
+						<Route path="/" element={<Landing />} />
+						<Route path="/dashboard" element={<Dashboard />} />
+						<Route path="/sign-up" element={<SignUp />} />
+						<Route path="/login" element={<Login />} />
+						<Route path="*" element={<NotFound />} />
+					</Route>
 				</Routes>
 			</BrowserRouter>
 		</UserContext.Provider>
