@@ -1,12 +1,19 @@
-const path = require('path')
-require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') })
+import path from 'path'
+import dotenv from 'dotenv'
+import { fileURLToPath } from 'url';
 
-const { createUser, loginUser } = require('./actions')
-const { validateUser } = require('./validations')
-const { authUser, getCurrentUser, invalidateUser } = require('./auth')
-const express = require('express')
-const cors = require('cors')
-const cookieParser = require('cookie-parser')
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.join(__dirname, '..', '..', '.env') })
+
+import { createUser, loginUser } from './actions.ts'
+import { validateUser } from './validations.ts'
+import { authUser, getCurrentUser, invalidateUser } from './auth.ts'
+import express from 'express'
+import cors from 'cors'
+import cookieParser from 'cookie-parser'
+
 const app = express()
 
 // Enable CORS for requests coming from your client (http://localhost:8080)

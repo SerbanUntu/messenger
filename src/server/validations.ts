@@ -1,4 +1,6 @@
-const validateUser = (req, res, next) => {
+import type { Request, Response, NextFunction } from 'express'
+
+export const validateUser = (req: Request, res: Response, next: NextFunction) => {
 	const user = req.body;
 	if (user === null || user === undefined || Object.keys(user).length === 0) {
 		res.status(400).json({ error: "Must specify a user" })
@@ -22,5 +24,3 @@ const validateUser = (req, res, next) => {
 
 	next()
 }
-
-module.exports = { validateUser }

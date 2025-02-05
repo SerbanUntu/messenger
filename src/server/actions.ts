@@ -1,7 +1,9 @@
-const { db } = require('./db')
-const { generateToken, getEncryptedPassword } = require('./auth')
+import db from './db.ts'
+import { generateToken, getEncryptedPassword } from './auth.ts'
+import type { Request, Response } from 'express'
+import type { DatabaseError } from 'pg'
 
-const createUser = async (req, res) => {
+export const createUser = async (req: Request, res: Response) => {
 	try {
 		const encryptedPassword = getEncryptedPassword(req.body.password, req.body.username)
 		const result = await db.query(
@@ -10,18 +12,22 @@ const createUser = async (req, res) => {
 		)
 
 		res.status(201).json(result.rows[0])
-	} catch (error) {
-		if (error.code === '23505') {
-			// unique_violation error code
+	} catch (err) {
+		// unique_violation error code
+		if (err && typeof err === 'object' && 'code' in err && err.code === '23505') {
 			res.status(409).json({ error: 'Username already exists' })
+		} else if (err instanceof Error) {
+			console.error('Database error:', err)
+			res.status(500).json({ error: err.toString() })
 		} else {
-			console.error('Database error:', error)
-			res.status(500).json({ error: error.toString() })
+			console.error('Unknown error:', err)
+			res.status(500).json({ error: err })
 		}
 	}
 }
 
-const loginUser = async (req, res) => {
+
+export const loginUser = async (req: Request, res: Response) => {
 	try {
 		const encryptedPassword = getEncryptedPassword(req.body.password, req.body.username)
 		const result = await db.query('SELECT * FROM users WHERE username = $1 AND password = $2', [
@@ -44,10 +50,13 @@ const loginUser = async (req, res) => {
 				result.rows[0].user_id,
 			])
 		}
-	} catch (error) {
-		console.error('Database error:', error)
-		res.status(500).json({ error: error.toString() })
+	} catch (err) {
+		if (err instanceof Error) {
+			console.error('Database error:', err)
+			res.status(500).json({ error: err.toString() })
+		} else {
+			console.error('Unknown error:', err)
+			res.status(500).json({ error: err })
+		}
 	}
 }
-
-module.exports = { createUser, loginUser }
