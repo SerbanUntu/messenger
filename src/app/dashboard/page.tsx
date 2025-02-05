@@ -1,16 +1,49 @@
 import { useContext, useEffect, useState } from 'react'
 import { Button } from '@/src/components/ui/button'
-import { LogOut, Menu, UserPlus, Users, X } from 'lucide-react'
+import { LogOut, Menu, Search, UserPlus, Users, X } from 'lucide-react'
 import UserContext from '@/src/contexts/user-context'
 import { useNavigate } from 'react-router'
 import { server } from '@/src/constants'
 import { toast } from '@/src/hooks/use-toast'
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from '@/src/components/ui/dialog'
+import { Label } from '@radix-ui/react-label'
+import { Input } from '@/src/components/ui/input'
 
 export default function Dashboard() {
+	const [username, setUsername] = useState('')
+	const [usernameExists, setUsernameExists] = useState<boolean | null>(null)
+
 	const navigate = useNavigate()
 	const [selectedChat, setSelectedChat] = useState(0)
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 	const { user, isUserLoading } = useContext(UserContext)
+
+	const checkUsername = async (username: string) => {
+		if (isUserLoading) return
+		if (!user) {
+			navigate('/login')
+			return
+		}
+		if (user.username === username) {
+			setUsernameExists(null)
+			toast({
+				variant: 'destructive',
+				title: 'Cannot create a conversation with yourself',
+			})
+			return;
+		}
+		const res = await fetch(`${server}/api/v1/users/${username}`)
+		const data = await res.json()
+		setUsernameExists(data.username === username) // Server should return a valid User object in the body
+	}
 
 	const handleLogOut = async () => {
 		await fetch(server + '/api/v1/logout', {
@@ -80,14 +113,70 @@ export default function Dashboard() {
 
 				{/* Action buttons */}
 				<div className="shrink-0 p-4 flex gap-2">
-					<Button className="flex-1 bg-blue-500 hover:bg-blue-600 cursor-pointer">
-						<UserPlus className="h-4 w-4 mr-2" />
-						New Chat
-					</Button>
-					<Button className="flex-1 bg-blue-500 hover:bg-blue-600 cursor-pointer">
-						<Users className="h-4 w-4 mr-2" />
-						New Group
-					</Button>
+					<Dialog>
+						<DialogTrigger asChild>
+							<Button className="flex-1 bg-blue-500 hover:bg-blue-600 cursor-pointer">
+								<UserPlus className="h-4 w-4 mr-2" />
+								New Chat
+							</Button>
+						</DialogTrigger>
+						<DialogContent className="sm:max-w-[425px] bg-gray-900 text-white border-gray-700">
+							<DialogHeader>
+								<DialogTitle>Who do you want to chat with?</DialogTitle>
+								<DialogDescription className="text-gray-400">
+									Enter the username of the person.
+								</DialogDescription>
+							</DialogHeader>
+							<div className="grid gap-4 py-4">
+								<div className="grid grid-cols-4 items-center gap-4">
+									<Label htmlFor="personal-chat-username-input" className="text-right">
+										Username
+									</Label>
+									<div className="col-span-3 flex items-center">
+										<Input
+											id="personal-chat-username-input"
+											value={username}
+											onChange={e => setUsername(e.target.value)}
+											maxLength={30}
+											className="flex-grow bg-gray-800 border-gray-700"
+										/>
+										<Button
+											type="button"
+											size="icon"
+											variant="ghost"
+											onClick={() => checkUsername(username)}
+											className="ml-2 hover:bg-gray-800 cursor-pointer">
+											<Search className="h-4 w-4 text-white" />
+										</Button>
+									</div>
+								</div>
+								{usernameExists !== null && (
+									<div
+										className={`text-xs p-2 rounded ${
+											usernameExists ? 'bg-green-900 text-green-200' : 'bg-red-900 text-red-200'
+										}`}>
+										{usernameExists ? 'Username exists!' : 'Username does not exist.'}
+									</div>
+								)}
+							</div>
+							<DialogFooter>
+								<Button
+									type="button"
+									disabled={usernameExists === null || !usernameExists}
+									className="bg-blue-600 hover:bg-blue-700 text-white cursor-pointer">
+									Start chatting
+								</Button>
+							</DialogFooter>
+						</DialogContent>
+					</Dialog>
+					<Dialog>
+						<DialogTrigger asChild>
+							<Button className="flex-1 bg-blue-500 hover:bg-blue-600 cursor-pointer">
+								<Users className="h-4 w-4 mr-2" />
+								New Group
+							</Button>
+						</DialogTrigger>
+					</Dialog>
 				</div>
 
 				{/* Chats list */}

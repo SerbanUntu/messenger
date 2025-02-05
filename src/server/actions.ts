@@ -60,3 +60,23 @@ export const loginUser = async (req: Request, res: Response) => {
 		}
 	}
 }
+
+export const getUserByUsername = async (req: Request, res: Response) => {
+	try {
+		const result = await db.query('SELECT user_id, username FROM users WHERE username = $1', [req.params.username])
+
+		if (result.rowCount === 0) {
+			res.status(404).json({ message: "There is no user with this username" })
+		} else {
+			res.status(200).json({ ...result.rows[0] })
+		}
+	} catch (err) {
+		if (err instanceof Error) {
+			console.error('Database error:', err)
+			res.status(500).json({ error: err.toString() })
+		} else {
+			console.error('Unknown error:', err)
+			res.status(500).json({ error: err })
+		}
+	}
+}

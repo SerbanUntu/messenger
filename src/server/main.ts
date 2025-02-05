@@ -1,6 +1,6 @@
 import './env.ts'
 import path from 'path'
-import { createUser, loginUser } from './actions.ts'
+import { createUser, getUserByUsername, loginUser } from './actions.ts'
 import { validateUser } from './validations.ts'
 import { authUser, getCurrentUser, invalidateUser } from './auth.ts'
 import express from 'express'
@@ -33,6 +33,7 @@ app.post('/api/v1/users', validateUser, createUser)
 app.post('/api/v1/login', validateUser, loginUser)
 app.get('/api/v1/logout', invalidateUser);
 app.get('/api/v1/users/currentUser', authUser, getCurrentUser)
+app.get('/api/v1/users/:username', getUserByUsername)
 
 // Catch-all route for SPA
 app.get('/*', (_, res) => {
