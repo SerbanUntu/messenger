@@ -17,17 +17,18 @@ import {
 import { Label } from '@radix-ui/react-label'
 import { Input } from '@/src/components/ui/input'
 import { Conversation, Message, User } from '@/src/types'
-import { formatDate } from '@/src/lib/utils'
+import { formatDate, getConversationName } from '@/src/lib/utils'
 
 export default function Dashboard() {
 	const navigate = useNavigate()
 	const { user, isUserLoading } = useContext(UserContext)
 
 	const [username, setUsername] = useState('')
+
 	const [inputUsers, setInputUsers] = useState<User[]>([])
 	const [usernameExists, setUsernameExists] = useState<boolean | null>(null)
 
-	const [selectedConversation, setSelectedConversation] = useState<number | null>(null)
+	const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 	const [conversations, setConversations] = useState<Conversation[]>([])
 	const [messages, setMessages] = useState<Message[]>([])
@@ -47,7 +48,6 @@ export default function Dashboard() {
 			})
 			return
 		}
-		//TODO Add check if conversation already exists
 		const res = await fetch(`${server}/api/v1/users/${username}`)
 		const data = (await res.json()) as User
 		setUsernameExists(data.username === username) // Server should return a valid User object in the body
@@ -60,6 +60,24 @@ export default function Dashboard() {
 			navigate('/login')
 			return
 		}
+		//? Prevent duplicate one-to-one conversation
+		if (users.length === 1) {
+			const matchingConversation = conversations.find(
+				c => c.users.length === 2 && c.users.some(u => u.user_id === users[0].user_id),
+			)
+			if (matchingConversation !== undefined) {
+				toast({
+					title: 'This conversation already exists!',
+					description: 'Cannot create a duplicate conversation',
+					variant: 'destructive',
+				})
+				//TODO Close dialog
+				if (selectedConversation === matchingConversation) return
+				setSelectedConversation(matchingConversation)
+				await fetchMessages(matchingConversation.conversation_id)
+				return
+			}
+		}
 		const res = await fetch(`${server}/api/v1/conversations`, {
 			method: 'POST',
 			body: JSON.stringify({ users: [...users, user] }),
@@ -67,18 +85,19 @@ export default function Dashboard() {
 				'Content-Type': 'application/json',
 			},
 		})
+		const data = await res.json()
 		if (!res.ok) {
-			const body = await res.json()
 			toast({
 				title: 'Could not create the new chat',
-				description: body.error,
+				description: data.error,
 				variant: 'destructive',
 			})
 			return
 		}
-		//TODO Get the new conversation from the response
-		const conversationsRes = await fetch(`${server}/api/v1/conversations/${user.user_id}`)
-		setConversations(await conversationsRes.json())
+		//TODO Close dialog
+		setConversations([...conversations, data])
+		setSelectedConversation(data)
+		setMessages([])
 	}
 
 	const getAllConversations = async () => {
@@ -106,16 +125,19 @@ export default function Dashboard() {
 			navigate('/login')
 			return
 		}
-		const res = await fetch(`${server}/api/v1/conversations/${selectedConversation}`, {
-			method: 'POST',
-			body: JSON.stringify({
-				content,
-				author_id: user.user_id,
-			}),
-			headers: {
-				'Content-Type': 'application/json',
+		const res = await fetch(
+			`${server}/api/v1/conversations/${selectedConversation.conversation_id}`,
+			{
+				method: 'POST',
+				body: JSON.stringify({
+					content,
+					author_id: user.user_id,
+				}),
+				headers: {
+					'Content-Type': 'application/json',
+				},
 			},
-		})
+		)
 		const data = await res.json()
 		if (!res.ok) {
 			toast({
@@ -274,20 +296,22 @@ export default function Dashboard() {
 						<div
 							key={conversation.conversation_id}
 							onClick={() => {
-								if (selectedConversation === conversation.conversation_id) return
+								if (selectedConversation === conversation) return
 								setMessages([])
-								setSelectedConversation(conversation.conversation_id)
+								setSelectedConversation(conversation)
 								setIsSidebarOpen(false) // Close sidebar on mobile after selection
 								setCurrentMessage('')
 								fetchMessages(conversation.conversation_id)
 							}}
 							className={`p-4 cursor-pointer hover:bg-gray-800/50 ${
-								selectedConversation === conversation.conversation_id ? 'bg-gray-800/50' : ''
+								selectedConversation === conversation ? 'bg-gray-800/50' : ''
 							}`}>
 							<div className="flex items-center gap-3">
 								<div className="flex-1 min-w-0">
 									<div className="flex justify-between items-baseline">
-										<p className="text-white font-medium truncate">{conversation.name}</p>
+										<p className="text-white font-medium truncate">
+											{getConversationName(conversation.users, user!)}
+										</p>
 										<span className="text-xs text-gray-400">12:00 AM</span>
 									</div>
 									<div className="flex justify-between items-baseline">
@@ -319,11 +343,7 @@ export default function Dashboard() {
 					{/* Chat header with adjusted padding for mobile */}
 					<div className="p-4 pl-16 lg:pl-4 border-b border-gray-800 flex items-center gap-3">
 						<span className="text-white font-medium">
-							{
-								conversations.find(
-									conversation => conversation.conversation_id === selectedConversation,
-								)?.name
-							}
+							{getConversationName(selectedConversation.users, user!)}
 						</span>
 					</div>
 
@@ -343,7 +363,10 @@ export default function Dashboard() {
 									}`}>
 									<div className="flex justify-between items-baseline gap-4">
 										<span className="font-medium text-sm">
-											{message.author_id === user?.user_id ? 'You' : 'USERNAME OF OTHER USER'}
+											{message.author_id === user?.user_id
+												? 'You'
+												: selectedConversation.users.find(u => u.user_id === message.author_id)
+														?.username ?? 'Other user'}
 										</span>
 										<span className="text-xs opacity-70">{formatDate(message.sent_at)}</span>
 									</div>
