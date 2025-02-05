@@ -1,18 +1,14 @@
+import './env.ts'
 import path from 'path'
-import dotenv from 'dotenv'
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-dotenv.config({ path: path.join(__dirname, '..', '..', '.env') })
-
 import { createUser, loginUser } from './actions.ts'
 import { validateUser } from './validations.ts'
 import { authUser, getCurrentUser, invalidateUser } from './auth.ts'
 import express from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
+import { fileURLToPath } from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express()
 

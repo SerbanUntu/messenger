@@ -29,7 +29,6 @@ export default function SignUp() {
 			navigate('/login')
 		} else {
 			const data = await res.json()
-			console.log(data)
 			toast({
 				title: 'Sign up failed',
 				description: data.error,
