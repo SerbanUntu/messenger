@@ -7,10 +7,13 @@ import express from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import { fileURLToPath } from 'url'
+import compression from 'compression'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express()
+
+app.use(compression())
 
 // Enable CORS for requests coming from your client (http://localhost:8080)
 app.use(cors({

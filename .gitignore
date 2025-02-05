@@ -134,3 +134,6 @@ todos.md
 
 # Deployment
 .vercel
+
+# Performance auditing
+.unlighthouse/
