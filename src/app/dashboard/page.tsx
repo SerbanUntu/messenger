@@ -16,15 +16,19 @@ import {
 } from '@/src/components/ui/dialog'
 import { Label } from '@radix-ui/react-label'
 import { Input } from '@/src/components/ui/input'
+import { Conversation, User } from '@/src/types'
 
 export default function Dashboard() {
+
 	const [username, setUsername] = useState('')
+	const [inputUsers, setInputUsers] = useState<User[]>([])
 	const [usernameExists, setUsernameExists] = useState<boolean | null>(null)
 
 	const navigate = useNavigate()
 	const [selectedChat, setSelectedChat] = useState(0)
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 	const { user, isUserLoading } = useContext(UserContext)
+	const [conversations, setConversations] = useState<Conversation[]>([])
 
 	const checkUsername = async (username: string) => {
 		if (isUserLoading) return
@@ -38,11 +42,58 @@ export default function Dashboard() {
 				variant: 'destructive',
 				title: 'Cannot create a conversation with yourself',
 			})
-			return;
+			return
 		}
+		//TODO Add check if conversation already exists
 		const res = await fetch(`${server}/api/v1/users/${username}`)
-		const data = await res.json()
+		const data = await res.json() as User
 		setUsernameExists(data.username === username) // Server should return a valid User object in the body
+		setInputUsers([data])
+	}
+
+	const createConversation = async (users: User[]) => {
+		if (isUserLoading) return
+		if (!user) {
+			navigate('/login')
+			return
+		}
+		const res = await fetch(`${server}/api/v1/conversations`, {
+			method: 'POST',
+			body: JSON.stringify({ users: [...users, user] }),
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		})
+		if (!res.ok) {
+			const body = await res.json();
+			toast({
+				title: 'Could not create the new chat',
+				description: body.error,
+				variant: 'destructive'
+			})
+			return
+		}
+		const conversationsRes = await fetch(`${server}/api/v1/conversations/${user.user_id}`);
+		setConversations(await conversationsRes.json());
+	}
+
+	const getAllConversations = async () => {
+		if (isUserLoading) return
+		if (!user) {
+			navigate('/login')
+			return
+		}
+		const res = await fetch(`${server}/api/v1/conversations/${user.user_id}`);
+		const data = await res.json();
+		if (!res.ok) {
+			toast({
+				title: 'Something went wrong when fetching the data',
+				description: data.error,
+				variant: 'destructive'
+			})
+			return
+		}
+		setConversations(data);
 	}
 
 	const handleLogOut = async () => {
@@ -61,14 +112,10 @@ export default function Dashboard() {
 		if (!user && !isUserLoading) {
 			navigate('/login')
 		}
+		if (user && !isUserLoading) {
+			getAllConversations();
+		}
 	}, [user, isUserLoading])
-
-	// Dummy data for demonstration
-	const chats = [
-		{ id: 0, name: 'alice_smith', lastMessage: 'See you tomorrow!', time: '10:30 AM', unread: 5 },
-		{ id: 1, name: 'bob_johnson', lastMessage: 'Thanks for the help!', time: '9:15 AM', unread: 0 },
-		{ id: 2, name: 'team_project', lastMessage: 'Meeting at 3 PM', time: 'Yesterday', unread: 2 },
-	]
 
 	const messages = [
 		{ id: 1, sender: 'alice_smith', content: 'Hi there!', time: '10:25 AM', isSent: false },
@@ -155,7 +202,7 @@ export default function Dashboard() {
 										className={`text-xs p-2 rounded ${
 											usernameExists ? 'bg-green-900 text-green-200' : 'bg-red-900 text-red-200'
 										}`}>
-										{usernameExists ? 'Username exists!' : 'Username does not exist.'}
+										{usernameExists ? 'Username exists!' : 'Invalid username'}
 									</div>
 								)}
 							</div>
@@ -163,6 +210,7 @@ export default function Dashboard() {
 								<Button
 									type="button"
 									disabled={usernameExists === null || !usernameExists}
+									onClick={() => createConversation(inputUsers)}
 									className="bg-blue-600 hover:bg-blue-700 text-white cursor-pointer">
 									Start chatting
 								</Button>
@@ -181,27 +229,27 @@ export default function Dashboard() {
 
 				{/* Chats list */}
 				<div className="flex-1 overflow-y-auto">
-					{chats.map(chat => (
+					{conversations.map(conversation => (
 						<div
-							key={chat.id}
+							key={conversation.conversation_id}
 							onClick={() => {
-								setSelectedChat(chat.id)
+								setSelectedChat(conversation.conversation_id)
 								setIsSidebarOpen(false) // Close sidebar on mobile after selection
 							}}
 							className={`p-4 cursor-pointer hover:bg-gray-800/50 ${
-								selectedChat === chat.id ? 'bg-gray-800/50' : ''
+								selectedChat === conversation.conversation_id ? 'bg-gray-800/50' : ''
 							}`}>
 							<div className="flex items-center gap-3">
 								<div className="flex-1 min-w-0">
 									<div className="flex justify-between items-baseline">
-										<p className="text-white font-medium truncate">{chat.name}</p>
-										<span className="text-xs text-gray-400">{chat.time}</span>
+										<p className="text-white font-medium truncate">{conversation.name}</p>
+										<span className="text-xs text-gray-400">12:00 AM</span>
 									</div>
 									<div className="flex justify-between items-baseline">
-										<p className="text-sm text-gray-400 truncate">{chat.lastMessage}</p>
-										{chat.unread > 0 && (
+										<p className="text-sm text-gray-400 truncate">Last message</p>
+										{3 > 0 && (
 											<div className="text-xs bg-red-400 font-bold rounded-full px-2 py-1 text-white w-4 h-4 flex items-center justify-center ml-2">
-												{chat.unread}
+												{3}
 											</div>
 										)}
 									</div>
@@ -225,7 +273,7 @@ export default function Dashboard() {
 				{/* Chat header with adjusted padding for mobile */}
 				<div className="p-4 pl-16 lg:pl-4 border-b border-gray-800 flex items-center gap-3">
 					<span className="text-white font-medium">
-						{chats.find(chat => chat.id === selectedChat)?.name}
+						{conversations.find(conversation => conversation.conversation_id === selectedChat)?.name}
 					</span>
 				</div>
 

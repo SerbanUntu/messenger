@@ -1,7 +1,7 @@
 import db from './db.ts'
 import { generateToken, getEncryptedPassword } from './auth.ts'
 import type { Request, Response } from 'express'
-import type { DatabaseError } from 'pg'
+import type { Conversation, User } from '../types.ts'
 
 export const createUser = async (req: Request, res: Response) => {
 	try {
@@ -16,16 +16,11 @@ export const createUser = async (req: Request, res: Response) => {
 		// unique_violation error code
 		if (err && typeof err === 'object' && 'code' in err && err.code === '23505') {
 			res.status(409).json({ error: 'Username already exists' })
-		} else if (err instanceof Error) {
-			console.error('Database error:', err)
-			res.status(500).json({ error: err.toString() })
 		} else {
-			console.error('Unknown error:', err)
-			res.status(500).json({ error: err })
+			handleError(err, res);
 		}
 	}
 }
-
 
 export const loginUser = async (req: Request, res: Response) => {
 	try {
@@ -51,13 +46,7 @@ export const loginUser = async (req: Request, res: Response) => {
 			])
 		}
 	} catch (err) {
-		if (err instanceof Error) {
-			console.error('Database error:', err)
-			res.status(500).json({ error: err.toString() })
-		} else {
-			console.error('Unknown error:', err)
-			res.status(500).json({ error: err })
-		}
+		handleError(err, res);
 	}
 }
 
@@ -71,12 +60,85 @@ export const getUserByUsername = async (req: Request, res: Response) => {
 			res.status(200).json({ ...result.rows[0] })
 		}
 	} catch (err) {
-		if (err instanceof Error) {
-			console.error('Database error:', err)
-			res.status(500).json({ error: err.toString() })
-		} else {
-			console.error('Unknown error:', err)
-			res.status(500).json({ error: err })
+		handleError(err, res);
+	}
+}
+
+export const createConversation = async (req: Request, res: Response) => {
+	try {
+		const users: User[] = req.body.users;
+		const result = await db.query(
+			'INSERT INTO conversations(created_at) VALUES ($1) RETURNING conversation_id, created_at',
+			[new Date()]
+		)
+		const conversation_id = result.rows[0].conversation_id;
+		//TODO Refactor this to use one single query
+		for (const user of users) {
+			await db.query(
+				'INSERT INTO participants(conversation_id, user_id) VALUES ($1, $2)',
+				[conversation_id, user.user_id]
+			)
 		}
+	} catch (err) {
+		handleError(err, res);
+	}
+}
+
+export const getAllConversations = async (req: Request, res: Response) => {
+	try {
+		const userId = parseInt(req.params.id);
+		const result = await db.query(
+			`
+			SELECT p1.conversation_id AS conversation_id, u.username AS name
+			FROM participants p1
+			JOIN participants p2 ON p1.conversation_id = p2.conversation_id
+			JOIN users u ON p2.user_id = u.user_id
+			WHERE p1.user_id = $1 AND p2.user_id <> $1
+			ORDER BY p1.conversation_id
+			`,
+			[userId]
+		)
+		const conversationsMap: { [key: number]: string | number } = {};
+
+		for (const row of result.rows) {
+			if (!conversationsMap[row.conversation_id]) {
+				conversationsMap[row.conversation_id] = row.name as string;
+			} else {
+				if (typeof conversationsMap[row.conversation] === 'string') {
+					conversationsMap[row.conversation_id] = 3;
+				} else {
+					conversationsMap[row.conversation_id] = (conversationsMap[row.conversation_id] as number) + 1;
+				}
+			}
+		}
+
+		const conversations: Conversation[] = [];
+		Object.entries(conversationsMap).forEach(([k, v]) => {
+			let name: string;
+			if (typeof v === "number") {
+				name = `Group of ${v}`
+			} else {
+				name = v;
+			}
+			conversations.push({
+				conversation_id: parseInt(k),
+				name
+			})
+		})
+
+		res.status(200).json(conversations);
+
+	} catch (err) {
+		handleError(err, res);
+	}
+}
+
+const handleError = (err: unknown, res: Response) => {
+	if (err instanceof Error) {
+		console.error('Database error:', err)
+		res.status(500).json({ error: err.toString() })
+	} else {
+		console.error('Unknown error:', err)
+		res.status(500).json({ error: err })
 	}
 }

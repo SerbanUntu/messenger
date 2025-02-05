@@ -24,3 +24,32 @@ export const validateUser = (req: Request, res: Response, next: NextFunction) =>
 
 	next()
 }
+
+export const validateConversation = (req: Request, res: Response, next: NextFunction) => {
+	const conversation = req.body;
+	if (conversation === null || conversation === undefined || Object.keys(conversation).length === 0) {
+		res.status(400).json({ error: "Request must have a body" })
+		return
+	}
+
+	const users = conversation.users;
+
+	if (!Array.isArray(users) || users === null || users === undefined) {
+		res.status(400).json({ error: "Invalid users array" })
+		return
+	}
+
+	if (users.length < 2) {
+		res.status(400).json({ error: "A conversation must have at least 2 users" })
+		return
+	}
+
+	for (const user of users) {
+		if (!user.user_id || typeof user.user_id !== 'number') {
+			res.status(400).json({ error: "Invalid user provided in array" })
+			return
+		}
+	}
+
+	next()
+}
