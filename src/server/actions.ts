@@ -1,7 +1,7 @@
 import db from './db.ts'
 import { generateToken, getEncryptedPassword } from './auth.ts'
 import type { Request, Response } from 'express'
-import type { Conversation, User } from '../types.ts'
+import type { Conversation, Message, User } from '../types.ts'
 
 export const createUser = async (req: Request, res: Response) => {
 	try {
@@ -73,6 +73,7 @@ export const createConversation = async (req: Request, res: Response) => {
 		)
 		const conversation_id = result.rows[0].conversation_id;
 		//TODO Refactor this to use one single query
+		//TODO Return created conversation
 		for (const user of users) {
 			await db.query(
 				'INSERT INTO participants(conversation_id, user_id) VALUES ($1, $2)',
@@ -133,8 +134,36 @@ export const getAllConversations = async (req: Request, res: Response) => {
 	}
 }
 
+export const createMessage = async (req: Request, res: Response) => {
+	try {
+		const conversation_id = parseInt(req.params.id);
+		const message = req.body;
+		const result = await db.query(
+			'INSERT INTO messages(conversation_id, author_id, sent_at, content) VALUES ($1, $2, $3, $4) RETURNING message_id, conversation_id, author_id, sent_at, content',
+			[conversation_id, message.author_id, new Date(), message.content]
+		);
+		res.status(201).json(result.rows[0]);
+	} catch (err) {
+		handleError(err, res);
+	}
+}
+
+export const getMessagesInConversation = async (req: Request, res: Response) => {
+	try {
+		const conversation_id = parseInt(req.params.id);
+		const result = await db.query(
+			'SELECT * FROM messages WHERE conversation_id = $1 ORDER BY sent_at',
+			[conversation_id]
+		);
+		res.status(200).json(result.rows);
+	} catch (err) {
+		handleError(err, res);
+	}
+}
+
 const handleError = (err: unknown, res: Response) => {
 	if (err instanceof Error) {
+
 		console.error('Database error:', err)
 		res.status(500).json({ error: err.toString() })
 	} else {

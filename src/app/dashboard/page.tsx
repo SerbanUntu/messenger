@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from 'react'
 import { Button } from '@/src/components/ui/button'
-import { LogOut, Menu, Search, UserPlus, Users, X } from 'lucide-react'
+import { LogOut, Menu, Search, Send, UserPlus, Users, X } from 'lucide-react'
 import UserContext from '@/src/contexts/user-context'
 import { useNavigate } from 'react-router'
 import { server } from '@/src/constants'
@@ -16,19 +16,22 @@ import {
 } from '@/src/components/ui/dialog'
 import { Label } from '@radix-ui/react-label'
 import { Input } from '@/src/components/ui/input'
-import { Conversation, User } from '@/src/types'
+import { Conversation, Message, User } from '@/src/types'
+import { formatDate } from '@/src/lib/utils'
 
 export default function Dashboard() {
+	const navigate = useNavigate()
+	const { user, isUserLoading } = useContext(UserContext)
 
 	const [username, setUsername] = useState('')
 	const [inputUsers, setInputUsers] = useState<User[]>([])
 	const [usernameExists, setUsernameExists] = useState<boolean | null>(null)
 
-	const navigate = useNavigate()
-	const [selectedChat, setSelectedChat] = useState(0)
+	const [selectedConversation, setSelectedConversation] = useState<number | null>(null)
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-	const { user, isUserLoading } = useContext(UserContext)
 	const [conversations, setConversations] = useState<Conversation[]>([])
+	const [messages, setMessages] = useState<Message[]>([])
+	const [currentMessage, setCurrentMessage] = useState('')
 
 	const checkUsername = async (username: string) => {
 		if (isUserLoading) return
@@ -46,7 +49,7 @@ export default function Dashboard() {
 		}
 		//TODO Add check if conversation already exists
 		const res = await fetch(`${server}/api/v1/users/${username}`)
-		const data = await res.json() as User
+		const data = (await res.json()) as User
 		setUsernameExists(data.username === username) // Server should return a valid User object in the body
 		setInputUsers([data])
 	}
@@ -61,20 +64,21 @@ export default function Dashboard() {
 			method: 'POST',
 			body: JSON.stringify({ users: [...users, user] }),
 			headers: {
-				'Content-Type': 'application/json'
-			}
+				'Content-Type': 'application/json',
+			},
 		})
 		if (!res.ok) {
-			const body = await res.json();
+			const body = await res.json()
 			toast({
 				title: 'Could not create the new chat',
 				description: body.error,
-				variant: 'destructive'
+				variant: 'destructive',
 			})
 			return
 		}
-		const conversationsRes = await fetch(`${server}/api/v1/conversations/${user.user_id}`);
-		setConversations(await conversationsRes.json());
+		//TODO Get the new conversation from the response
+		const conversationsRes = await fetch(`${server}/api/v1/conversations/${user.user_id}`)
+		setConversations(await conversationsRes.json())
 	}
 
 	const getAllConversations = async () => {
@@ -83,17 +87,66 @@ export default function Dashboard() {
 			navigate('/login')
 			return
 		}
-		const res = await fetch(`${server}/api/v1/conversations/${user.user_id}`);
-		const data = await res.json();
+		const res = await fetch(`${server}/api/v1/users/${user.user_id}/conversations`)
+		const data = await res.json()
 		if (!res.ok) {
 			toast({
 				title: 'Something went wrong when fetching the data',
 				description: data.error,
-				variant: 'destructive'
+				variant: 'destructive',
 			})
 			return
 		}
-		setConversations(data);
+		setConversations(data)
+	}
+
+	const createMessage = async (content: string) => {
+		if (isUserLoading || selectedConversation === null) return
+		if (!user) {
+			navigate('/login')
+			return
+		}
+		const res = await fetch(`${server}/api/v1/conversations/${selectedConversation}`, {
+			method: 'POST',
+			body: JSON.stringify({
+				content,
+				author_id: user.user_id,
+			}),
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		})
+		const data = await res.json()
+		if (!res.ok) {
+			toast({
+				title: 'Could not send the message',
+				description: data.error,
+				variant: 'destructive',
+			})
+			return
+		}
+		setMessages([...messages, { ...data, sent_at: new Date(data.sent_at) }])
+	}
+
+	const fetchMessages = async (conversation_id: number) => {
+		if (isUserLoading) return
+		if (!user) {
+			navigate('/login')
+			return
+		}
+		const res = await fetch(`${server}/api/v1/conversations/${conversation_id}/messages`)
+		const data = await res.json()
+		if (!res.ok) {
+			toast({
+				title: 'Something went wrong when fetching the data',
+				description: data.error,
+				variant: 'destructive',
+			})
+			return
+		}
+		setMessages(
+			data.map((message: Message) => ({ ...message, sent_at: new Date(message.sent_at) })),
+		)
 	}
 
 	const handleLogOut = async () => {
@@ -113,21 +166,9 @@ export default function Dashboard() {
 			navigate('/login')
 		}
 		if (user && !isUserLoading) {
-			getAllConversations();
+			getAllConversations()
 		}
 	}, [user, isUserLoading])
-
-	const messages = [
-		{ id: 1, sender: 'alice_smith', content: 'Hi there!', time: '10:25 AM', isSent: false },
-		{ id: 2, sender: 'You', content: 'Hello! How are you?', time: '10:28 AM', isSent: true },
-		{
-			id: 3,
-			sender: 'alice_smith',
-			content: "I'm good, see you tomorrow!",
-			time: '10:30 AM',
-			isSent: false,
-		},
-	]
 
 	return (
 		<div className="flex h-screen bg-dark-navy relative overflow-hidden">
@@ -227,17 +268,21 @@ export default function Dashboard() {
 					</Dialog>
 				</div>
 
-				{/* Chats list */}
+				{/* Conversations list */}
 				<div className="flex-1 overflow-y-auto">
 					{conversations.map(conversation => (
 						<div
 							key={conversation.conversation_id}
 							onClick={() => {
-								setSelectedChat(conversation.conversation_id)
+								if (selectedConversation === conversation.conversation_id) return
+								setMessages([])
+								setSelectedConversation(conversation.conversation_id)
 								setIsSidebarOpen(false) // Close sidebar on mobile after selection
+								setCurrentMessage('')
+								fetchMessages(conversation.conversation_id)
 							}}
 							className={`p-4 cursor-pointer hover:bg-gray-800/50 ${
-								selectedChat === conversation.conversation_id ? 'bg-gray-800/50' : ''
+								selectedConversation === conversation.conversation_id ? 'bg-gray-800/50' : ''
 							}`}>
 							<div className="flex items-center gap-3">
 								<div className="flex-1 min-w-0">
@@ -269,50 +314,76 @@ export default function Dashboard() {
 			)}
 
 			{/* Chat area - now with responsive padding */}
-			<div className="flex-1 flex flex-col">
-				{/* Chat header with adjusted padding for mobile */}
-				<div className="p-4 pl-16 lg:pl-4 border-b border-gray-800 flex items-center gap-3">
-					<span className="text-white font-medium">
-						{conversations.find(conversation => conversation.conversation_id === selectedChat)?.name}
-					</span>
-				</div>
+			{selectedConversation ? (
+				<div className="flex-1 flex flex-col">
+					{/* Chat header with adjusted padding for mobile */}
+					<div className="p-4 pl-16 lg:pl-4 border-b border-gray-800 flex items-center gap-3">
+						<span className="text-white font-medium">
+							{
+								conversations.find(
+									conversation => conversation.conversation_id === selectedConversation,
+								)?.name
+							}
+						</span>
+					</div>
 
-				{/* Messages */}
-				<div className="flex-1 overflow-y-auto p-4 space-y-4">
-					{messages.map(message => (
-						<div
-							key={message.id}
-							className={`flex ${message.isSent ? 'justify-end' : 'justify-start'}`}>
+					{/* Messages */}
+					<div className="flex-1 overflow-y-auto p-4 space-y-4">
+						{messages.map(message => (
 							<div
-								className={`max-w-[70%] rounded-lg px-4 py-2 ${
-									message.isSent ? 'bg-messenger-blue text-white' : 'bg-gray-800 text-white'
+								key={message.message_id}
+								className={`flex ${
+									message.author_id === user?.user_id ? 'justify-end' : 'justify-start'
 								}`}>
-								<div className="flex justify-between items-baseline gap-4">
-									<span className="font-medium text-sm">
-										{message.isSent ? 'You' : message.sender}
-									</span>
-									<span className="text-xs opacity-70">{message.time}</span>
+								<div
+									className={`max-w-[70%] rounded-lg px-4 py-2 ${
+										message.author_id === user?.user_id
+											? 'bg-messenger-blue text-white'
+											: 'bg-gray-800 text-white'
+									}`}>
+									<div className="flex justify-between items-baseline gap-4">
+										<span className="font-medium text-sm">
+											{message.author_id === user?.user_id ? 'You' : 'USERNAME OF OTHER USER'}
+										</span>
+										<span className="text-xs opacity-70">{formatDate(message.sent_at)}</span>
+									</div>
+									<p className="mt-1">{message.content}</p>
 								</div>
-								<p className="mt-1">{message.content}</p>
 							</div>
-						</div>
-					))}
-				</div>
+						))}
+					</div>
 
-				{/* Message input */}
-				<div className="p-4 border-t border-gray-800">
-					<form className="flex gap-2 items-center">
-						<input
-							type="text"
-							placeholder="Type a message..."
-							className="flex-1 bg-gray-800 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#1a56db]"
-						/>
-						<Button type="submit" className="bg-blue-500 hover:bg-blue-600 cursor-pointer">
-							Send
-						</Button>
-					</form>
+					{/* Message input */}
+					<div className="p-4 border-t border-gray-800">
+						<form
+							className="flex gap-2 items-center"
+							onSubmit={e => {
+								e.preventDefault()
+								createMessage(currentMessage)
+								setCurrentMessage('')
+							}}>
+							<input
+								type="text"
+								placeholder="Type a message..."
+								value={currentMessage}
+								onChange={e => setCurrentMessage(e.target.value)}
+								className="flex-1 bg-gray-800 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#1a56db]"
+								required
+							/>
+							<Button type="submit" className="bg-blue-500 hover:bg-blue-600 cursor-pointer">
+								Send
+							</Button>
+						</form>
+					</div>
 				</div>
-			</div>
+			) : (
+				<div className="flex flex-1 gap-4 items-center justify-center text-dark-navy pointer-events-none select-none">
+					<Send className="h-[10vw] w-[10vw] drop-shadow-[2px_2px_0px_rgba(21,156,183,1)]" />
+					<p className="text-[10vw] font-medium drop-shadow-[2px_2px_0px_rgba(21,156,183,1)]">
+						Messenger
+					</p>
+				</div>
+			)}
 		</div>
 	)
 }

@@ -7,3 +7,11 @@ export type Conversation = {
 	conversation_id: number,
 	name: string,
 }
+
+export type Message = {
+	message_id: number,
+	conversation_id: number,
+	author_id: number,
+	sent_at: Date,
+	content: string,
+}

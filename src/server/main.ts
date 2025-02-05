@@ -1,7 +1,7 @@
 import './env.ts'
 import path from 'path'
-import { createConversation, createUser, getAllConversations, getUserByUsername, loginUser } from './actions.ts'
-import { validateConversation, validateUser } from './validations.ts'
+import { createConversation, createMessage, createUser, getAllConversations, getMessagesInConversation, getUserByUsername, loginUser } from './actions.ts'
+import { validateConversation, validateMessage, validateUser } from './validations.ts'
 import { authUser, getCurrentUser, invalidateUser } from './auth.ts'
 import express from 'express'
 import cors from 'cors'
@@ -35,7 +35,9 @@ app.get('/api/v1/logout', invalidateUser);
 app.get('/api/v1/users/currentUser', authUser, getCurrentUser)
 app.get('/api/v1/users/:username', getUserByUsername)
 app.post('/api/v1/conversations', validateConversation, createConversation)
-app.get('/api/v1/conversations/:id', getAllConversations)
+app.get('/api/v1/users/:id/conversations', getAllConversations)
+app.post('/api/v1/conversations/:id', validateMessage, createMessage)
+app.get('/api/v1/conversations/:id/messages', getMessagesInConversation)
 
 // Catch-all route for SPA
 app.get('/*', (_, res) => {
