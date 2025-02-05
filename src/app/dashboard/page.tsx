@@ -23,6 +23,8 @@ export default function Dashboard() {
 	const navigate = useNavigate()
 	const { user, isUserLoading } = useContext(UserContext)
 
+	const [isNewChatDialogOpen, setIsNewChatDialogOpen] = useState(false);
+
 	const [username, setUsername] = useState('')
 
 	const [inputUsers, setInputUsers] = useState<User[]>([])
@@ -71,7 +73,7 @@ export default function Dashboard() {
 					description: 'Cannot create a duplicate conversation',
 					variant: 'destructive',
 				})
-				//TODO Close dialog
+				setIsNewChatDialogOpen(false);
 				if (selectedConversation === matchingConversation) return
 				setSelectedConversation(matchingConversation)
 				await fetchMessages(matchingConversation.conversation_id)
@@ -94,7 +96,7 @@ export default function Dashboard() {
 			})
 			return
 		}
-		//TODO Close dialog
+		setIsNewChatDialogOpen(false);
 		setConversations([...conversations, data])
 		setSelectedConversation(data)
 		setMessages([])
@@ -223,7 +225,7 @@ export default function Dashboard() {
 
 				{/* Action buttons */}
 				<div className="shrink-0 p-4 flex gap-2">
-					<Dialog>
+					<Dialog open={isNewChatDialogOpen} onOpenChange={setIsNewChatDialogOpen}>
 						<DialogTrigger asChild>
 							<Button className="flex-1 bg-blue-500 hover:bg-blue-600 cursor-pointer">
 								<UserPlus className="h-4 w-4 mr-2" />
