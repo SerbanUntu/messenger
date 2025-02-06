@@ -24,6 +24,7 @@ export default function Dashboard() {
 	const { user, isUserLoading } = useContext(UserContext)
 
 	const [isNewChatDialogOpen, setIsNewChatDialogOpen] = useState(false)
+	const [isNewGroupDialogOpen, setIsNewGroupDialogOpen] = useState(false)
 
 	const [username, setUsername] = useState('')
 
@@ -36,7 +37,8 @@ export default function Dashboard() {
 	const [messages, setMessages] = useState<Message[]>([])
 	const [currentMessage, setCurrentMessage] = useState('')
 
-	const checkUsername = async (username: string) => {
+	const checkUsername = async (username: string, isAppended: boolean) => {
+		//TODO Remove the 5 lines below from each DB call
 		if (isUserLoading) return
 		if (!user) {
 			navigate('/login')
@@ -50,10 +52,22 @@ export default function Dashboard() {
 			})
 			return
 		}
+		if (inputUsers.some(iu => iu.username === username)) {
+			setUsernameExists(true)
+			return
+		}
 		const res = await fetch(`${server}/api/v1/users/${username}`)
 		const data = (await res.json()) as User
-		setUsernameExists(data.username === username) // Server should return a valid User object in the body
-		setInputUsers([data])
+		if (data.username === username) {
+			// Server should return a valid User object in the body
+			setUsernameExists(true)
+			if (isAppended) {
+				setInputUsers([...inputUsers, data])
+				setUsername('')
+			} else setInputUsers([data])
+		} else {
+			setUsernameExists(false)
+		}
 	}
 
 	const createConversation = async (users: User[]) => {
@@ -74,6 +88,7 @@ export default function Dashboard() {
 					variant: 'destructive',
 				})
 				setIsNewChatDialogOpen(false)
+				setIsNewGroupDialogOpen(false)
 				if (selectedConversation === matchingConversation) return
 				setSelectedConversation(matchingConversation)
 				await fetchMessages(matchingConversation.conversation_id)
@@ -97,16 +112,15 @@ export default function Dashboard() {
 			return
 		}
 		setIsNewChatDialogOpen(false)
-		setConversations([
-			...conversations,
-			{
-				...data,
-				lastMessage: data.lastMessage
-					? { ...data.lastMessage, sent_at: new Date(data.lastMessage.sent_at) }
-					: null,
-			},
-		])
-		setSelectedConversation(data)
+		setIsNewGroupDialogOpen(false)
+		const newConversation: Conversation = {
+			...data,
+			lastMessage: data.lastMessage
+				? { ...data.lastMessage, sent_at: new Date(data.lastMessage.sent_at) }
+				: null,
+		}
+		setConversations([...conversations, newConversation])
+		setSelectedConversation(newConversation)
 		setMessages([])
 	}
 
@@ -209,6 +223,15 @@ export default function Dashboard() {
 		}
 	}, [user, isUserLoading])
 
+	useEffect(() => {
+		if (!isNewChatDialogOpen && !isNewGroupDialogOpen) {
+			console.log('TEST')
+			setUsername('')
+			setInputUsers([])
+			setUsernameExists(null)
+		}
+	}, [isNewChatDialogOpen, isNewGroupDialogOpen])
+
 	return (
 		<div className="flex h-screen bg-dark-navy relative overflow-hidden">
 			{/* Mobile menu button */}
@@ -238,7 +261,7 @@ export default function Dashboard() {
 					</Button>
 				</div>
 
-				{/* Action buttons */}
+				{/* New chat dialog */}
 				<div className="shrink-0 p-4 flex gap-2">
 					<Dialog open={isNewChatDialogOpen} onOpenChange={setIsNewChatDialogOpen}>
 						<DialogTrigger asChild>
@@ -271,7 +294,7 @@ export default function Dashboard() {
 											type="button"
 											size="icon"
 											variant="ghost"
-											onClick={() => checkUsername(username)}
+											onClick={() => checkUsername(username, false)}
 											className="ml-2 hover:bg-gray-800 cursor-pointer">
 											<Search className="h-4 w-4 text-white" />
 										</Button>
@@ -297,13 +320,92 @@ export default function Dashboard() {
 							</DialogFooter>
 						</DialogContent>
 					</Dialog>
-					<Dialog>
+
+					{/* New group dialog */}
+					<Dialog open={isNewGroupDialogOpen} onOpenChange={setIsNewGroupDialogOpen}>
 						<DialogTrigger asChild>
 							<Button className="flex-1 bg-blue-500 hover:bg-blue-600 cursor-pointer">
 								<Users className="h-4 w-4 mr-2" />
 								New Group
 							</Button>
 						</DialogTrigger>
+						<DialogContent className="sm:max-w-[425px] bg-gray-900 text-white border-gray-700">
+							<DialogHeader>
+								<DialogTitle>Create a new group chat</DialogTitle>
+								<DialogDescription className="text-gray-400">
+									Add multiple users to one conversation
+								</DialogDescription>
+							</DialogHeader>
+							<div className="grid gap-4 py-4">
+								{inputUsers.length > 0 && (
+									<div className="flex flex-col gap-1 px-2">
+										<Label className="text-sm">Added Users:</Label>
+										<div className="flex flex-wrap gap-2">
+											{inputUsers.map(iu => (
+												<div
+													key={iu.username}
+													className="bg-gray-800 text-white px-2 py-1 rounded-full flex items-center">
+													<span>{iu.username}</span>
+													<Button
+														type="button"
+														variant="ghost"
+														size="icon"
+														className="h-4 w-4 ml-1 text-gray-400 hover:text-white cursor-pointer"
+														onClick={() =>
+															setInputUsers(old => {
+																const newUsers = [...old]
+																newUsers.splice(newUsers.indexOf(iu), 1)
+																return newUsers
+															})
+														}>
+														<X className="h-3 w-3" />
+													</Button>
+												</div>
+											))}
+										</div>
+									</div>
+								)}
+								<div className="grid grid-cols-4 items-center gap-4">
+									<Label htmlFor="personal-chat-username-input" className="text-right">
+										Username
+									</Label>
+									<div className="col-span-3 flex items-center">
+										<Input
+											id="personal-chat-username-input"
+											value={username}
+											onChange={e => setUsername(e.target.value)}
+											maxLength={30}
+											className="flex-grow bg-gray-800 border-gray-700"
+										/>
+										<Button
+											type="button"
+											size="icon"
+											variant="ghost"
+											onClick={() => checkUsername(username, true)}
+											className="ml-2 hover:bg-gray-800 cursor-pointer">
+											<Search className="h-4 w-4 text-white" />
+										</Button>
+									</div>
+								</div>
+								{usernameExists !== null && (
+									<div
+										className={`text-xs p-2 rounded ${
+											usernameExists ? 'bg-green-900 text-green-200' : 'bg-red-900 text-red-200'
+										}`}>
+										{usernameExists ? 'Username exists!' : 'Invalid username'}
+									</div>
+								)}
+							</div>
+							<DialogFooter>
+								<Button
+									type="button"
+									disabled={inputUsers.length < 2}
+									onClick={() => createConversation(inputUsers)}
+									className="bg-blue-600 hover:bg-blue-700 text-white cursor-pointer">
+									Create group
+								</Button>
+							</DialogFooter>
+						</DialogContent>
 					</Dialog>
 				</div>
 

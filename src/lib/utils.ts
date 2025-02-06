@@ -20,5 +20,5 @@ export function formatDate(date: Date) {
 export function getConversationName(users: User[], currentUser: User) {
 	const filteredUsers = users.filter(u => u.user_id !== currentUser.user_id);
 	if (filteredUsers.length === 1) return filteredUsers[0].username;
-	return `Group of ${filteredUsers.join(', ')}`
+	return `Group with ${filteredUsers.map(u => u.username).join(', ')}`
 }
