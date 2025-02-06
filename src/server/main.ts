@@ -43,6 +43,11 @@ app.get('/api/v1/users/:id/conversations', getAllConversations)
 app.post('/api/v1/conversations/:id', validateMessage, createMessage)
 app.get('/api/v1/conversations/:id/messages', getMessagesInConversation)
 
+app.get('/robots.txt', (_, res) => {
+	res.type('text/plain')
+	res.send('User-agent: *\nDisallow: /api/*')
+})
+
 // Catch-all route for SPA
 app.get('/*', (_, res) => {
 	res.sendFile(path.join(__dirname, '..', '..', 'dist', 'index.html'))

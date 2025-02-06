@@ -56,7 +56,7 @@ export default function UserForm({ buttonText, onSubmit }: UserFormProps) {
 				<CardFooter>
 					<Button
 						type="submit"
-						className="w-full bg-blue-500 hover:bg-blue-600 text-white cursor-pointer">
+						className="w-full bg-blue-600 hover:bg-blue-700 text-white cursor-pointer">
 						{buttonText}
 					</Button>
 				</CardFooter>

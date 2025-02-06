@@ -265,7 +265,7 @@ export default function Dashboard() {
 				<div className="shrink-0 p-4 flex gap-2">
 					<Dialog open={isNewChatDialogOpen} onOpenChange={setIsNewChatDialogOpen}>
 						<DialogTrigger asChild>
-							<Button className="flex-1 bg-blue-500 hover:bg-blue-600 cursor-pointer">
+							<Button className="flex-1 bg-blue-600 hover:bg-blue-700 cursor-pointer">
 								<UserPlus className="h-4 w-4 mr-2" />
 								New Chat
 							</Button>
@@ -324,7 +324,7 @@ export default function Dashboard() {
 					{/* New group dialog */}
 					<Dialog open={isNewGroupDialogOpen} onOpenChange={setIsNewGroupDialogOpen}>
 						<DialogTrigger asChild>
-							<Button className="flex-1 bg-blue-500 hover:bg-blue-600 cursor-pointer">
+							<Button className="flex-1 bg-blue-600 hover:bg-blue-700 cursor-pointer">
 								<Users className="h-4 w-4 mr-2" />
 								New Group
 							</Button>
@@ -519,7 +519,7 @@ export default function Dashboard() {
 								className="flex-1 bg-gray-800 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#1a56db]"
 								required
 							/>
-							<Button type="submit" className="bg-blue-500 hover:bg-blue-600 cursor-pointer">
+							<Button type="submit" className="bg-blue-600 hover:bg-blue-700 cursor-pointer">
 								Send
 							</Button>
 						</form>

@@ -41,7 +41,7 @@ export default function Landing() {
 							<div className="space-x-4">
 								<NavLink
 									to="/sign-up"
-									className="inline-flex h-9 items-center justify-center rounded-md bg-blue-500 px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-1 cursor-pointer">
+									className="inline-flex h-9 items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-1 cursor-pointer">
 									Get Started
 								</NavLink>
 							</div>
