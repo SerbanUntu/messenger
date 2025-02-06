@@ -23,7 +23,7 @@ export default function Dashboard() {
 	const navigate = useNavigate()
 	const { user, isUserLoading } = useContext(UserContext)
 
-	const [isNewChatDialogOpen, setIsNewChatDialogOpen] = useState(false);
+	const [isNewChatDialogOpen, setIsNewChatDialogOpen] = useState(false)
 
 	const [username, setUsername] = useState('')
 
@@ -73,7 +73,7 @@ export default function Dashboard() {
 					description: 'Cannot create a duplicate conversation',
 					variant: 'destructive',
 				})
-				setIsNewChatDialogOpen(false);
+				setIsNewChatDialogOpen(false)
 				if (selectedConversation === matchingConversation) return
 				setSelectedConversation(matchingConversation)
 				await fetchMessages(matchingConversation.conversation_id)
@@ -96,8 +96,16 @@ export default function Dashboard() {
 			})
 			return
 		}
-		setIsNewChatDialogOpen(false);
-		setConversations([...conversations, data])
+		setIsNewChatDialogOpen(false)
+		setConversations([
+			...conversations,
+			{
+				...data,
+				lastMessage: data.lastMessage
+					? { ...data.lastMessage, sent_at: new Date(data.lastMessage.sent_at) }
+					: null,
+			},
+		])
 		setSelectedConversation(data)
 		setMessages([])
 	}
@@ -118,7 +126,14 @@ export default function Dashboard() {
 			})
 			return
 		}
-		setConversations(data)
+		setConversations(
+			data.map((c: Conversation) => ({
+				...c,
+				lastMessage: c.lastMessage
+					? { ...c.lastMessage, sent_at: new Date(c.lastMessage.sent_at) }
+					: null,
+			})),
+		)
 	}
 
 	const createMessage = async (content: string) => {
@@ -301,6 +316,7 @@ export default function Dashboard() {
 								if (selectedConversation === conversation) return
 								setMessages([])
 								setSelectedConversation(conversation)
+								conversation.newMessages = 0
 								setIsSidebarOpen(false) // Close sidebar on mobile after selection
 								setCurrentMessage('')
 								fetchMessages(conversation.conversation_id)
@@ -314,13 +330,19 @@ export default function Dashboard() {
 										<p className="text-white font-medium truncate">
 											{getConversationName(conversation.users, user!)}
 										</p>
-										<span className="text-xs text-gray-400">12:00 AM</span>
+										<span className="text-xs text-gray-400">
+											{conversation.lastMessage ? formatDate(conversation.lastMessage.sent_at) : ''}
+										</span>
 									</div>
 									<div className="flex justify-between items-baseline">
-										<p className="text-sm text-gray-400 truncate">Last message</p>
-										{3 > 0 && (
+										<p className="text-sm text-gray-400 truncate">
+											{conversation.lastMessage
+												? conversation.lastMessage.content
+												: 'New conversation'}
+										</p>
+										{conversation.newMessages > 0 && (
 											<div className="text-xs bg-red-400 font-bold rounded-full px-2 py-1 text-white w-4 h-4 flex items-center justify-center ml-2">
-												{3}
+												{conversation.newMessages}
 											</div>
 										)}
 									</div>

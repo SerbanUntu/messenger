@@ -6,6 +6,8 @@ export type User = {
 export type Conversation = {
 	conversation_id: number,
 	users: User[],
+	lastMessage: Message | null,
+	newMessages: number
 }
 
 export type Message = {

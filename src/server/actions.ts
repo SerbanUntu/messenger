@@ -90,22 +90,38 @@ export const getAllConversations = async (req: Request, res: Response) => {
 		const userId = parseInt(req.params.id);
 		const result = await db.query(
 			`
-			SELECT p1.conversation_id AS conversation_id, u.username AS name, u.user_id AS user_id
+			SELECT p1.conversation_id AS conversation_id, u.username AS name, u.user_id AS user_id, m.message_id AS message_id, m.author_id AS author_id, m.sent_at AS sent_at, m.content AS content
 			FROM participants p1
 			JOIN participants p2 ON p1.conversation_id = p2.conversation_id
 			JOIN users u ON p2.user_id = u.user_id
+			LEFT JOIN LATERAL (
+				SELECT message_id, author_id, sent_at, content
+				FROM messages
+				WHERE conversation_id = p1.conversation_id
+				ORDER BY sent_at DESC
+				LIMIT 1
+			) m ON true
 			WHERE p1.user_id = $1
 			ORDER BY p1.conversation_id
 			`,
 			[userId]
 		)
-		const conversationsMap: { [key: number]: User[] } = {};
+		const conversationsMap: { [key: number]: [User[], Message | null] } = {};
 
 		for (const row of result.rows) {
 			if (!conversationsMap[row.conversation_id]) {
-				conversationsMap[row.conversation_id] = [{ user_id: row.user_id, username: row.name }];
+				conversationsMap[row.conversation_id] = [[{
+					user_id: row.user_id,
+					username: row.name
+				}], row.message_id ? {
+					message_id: row.message_id as number,
+					conversation_id: row.conversation_id as number,
+					author_id: row.author_id as number,
+					sent_at: new Date(row.sent_at),
+					content: row.content as string
+				} : null];
 			} else {
-				conversationsMap[row.conversation_id].push({ user_id: row.user_id, username: row.name });
+				conversationsMap[row.conversation_id][0].push({ user_id: row.user_id, username: row.name });
 			}
 		}
 
@@ -113,7 +129,9 @@ export const getAllConversations = async (req: Request, res: Response) => {
 		Object.entries(conversationsMap).forEach(([k, v]) => {
 			conversations.push({
 				conversation_id: parseInt(k),
-				users: v,
+				users: v[0],
+				lastMessage: v[1],
+				newMessages: 0
 			})
 		})
 
