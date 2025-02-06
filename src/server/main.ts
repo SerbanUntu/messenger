@@ -7,13 +7,11 @@ import express from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import { fileURLToPath } from 'url'
-import compression from 'compression'
+import compression from './compression.ts'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express()
-
-app.use(compression())
 
 // Enable CORS for requests coming from your client (http://localhost:8080)
 app.use(cors({
@@ -29,6 +27,9 @@ app.use((req, _, next) => {
 	console.log(`${req.method} ${req.url}`)
 	next()
 })
+
+// Use Brotli for the js bundle (if supported)
+app.use('*.js', compression);
 
 app.use(express.static(path.join(__dirname, '..', '..', 'dist')))
 

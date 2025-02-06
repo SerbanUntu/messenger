@@ -1,6 +1,8 @@
 import path from 'path'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import { fileURLToPath } from 'url'
+import zlib from 'zlib'
+import CompressionPlugin from 'compression-webpack-plugin'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -36,7 +38,7 @@ export default {
 						presets: [
 							'@babel/preset-env',
 							['@babel/preset-react', { runtime: 'automatic' }],
-							'@babel/preset-typescript'
+							'@babel/preset-typescript',
 						],
 					},
 				},
@@ -59,6 +61,19 @@ export default {
 		new HtmlWebpackPlugin({
 			template: './index.html',
 			favicon: './public/favicon.ico',
+		}),
+		new CompressionPlugin({
+			filename: '[path][base].br',
+			algorithm: 'brotliCompress',
+			test: /\.(js|css|html|svg)$/,
+			compressionOptions: {
+				params: {
+					[zlib.constants.BROTLI_PARAM_QUALITY]: 11,
+				},
+			},
+			threshold: 10240,
+			minRatio: 0.8,
+			deleteOriginalAssets: false,
 		}),
 	],
 }
