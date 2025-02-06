@@ -102,38 +102,30 @@ export const getAllConversations = async (req: Request, res: Response) => {
 				LIMIT 1
 			) m ON true
 			WHERE p1.user_id = $1
-			ORDER BY p1.conversation_id
+			ORDER BY m.sent_at DESC NULLS LAST, p1.conversation_id
 			`,
 			[userId]
 		)
-		const conversationsMap: { [key: number]: [User[], Message | null] } = {};
+		const conversations: Conversation[] = [];
 
 		for (const row of result.rows) {
-			if (!conversationsMap[row.conversation_id]) {
-				conversationsMap[row.conversation_id] = [[{
-					user_id: row.user_id,
-					username: row.name
-				}], row.message_id ? {
-					message_id: row.message_id as number,
-					conversation_id: row.conversation_id as number,
-					author_id: row.author_id as number,
-					sent_at: new Date(row.sent_at),
-					content: row.content as string
-				} : null];
+			if (conversations.length === 0 || row.conversation_id !== conversations.at(-1)!.conversation_id) {
+				conversations.push({
+					conversation_id: row.conversation_id,
+					users: [{ user_id: row.user_id, username: row.name }],
+					lastMessage: row.message_id ? {
+						message_id: row.message_id,
+						conversation_id: row.conversation_id,
+						author_id: row.author_id,
+						sent_at: new Date(row.sent_at),
+						content: row.content
+					} : null,
+					newMessages: 0
+				})
 			} else {
-				conversationsMap[row.conversation_id][0].push({ user_id: row.user_id, username: row.name });
+				conversations.at(-1)!.users.push({ user_id: row.user_id, username: row.name });
 			}
 		}
-
-		const conversations: Conversation[] = [];
-		Object.entries(conversationsMap).forEach(([k, v]) => {
-			conversations.push({
-				conversation_id: parseInt(k),
-				users: v[0],
-				lastMessage: v[1],
-				newMessages: 0
-			})
-		})
 
 		res.status(200).json(conversations);
 

@@ -83,9 +83,9 @@ export default function Dashboard() {
 			)
 			if (matchingConversation !== undefined) {
 				toast({
-					title: 'This conversation already exists!',
-					description: 'Cannot create a duplicate conversation',
-					variant: 'destructive',
+					title: 'Conversation found!',
+					description: 'This conversation already exists',
+					variant: 'success',
 				})
 				setIsNewChatDialogOpen(false)
 				setIsNewGroupDialogOpen(false)

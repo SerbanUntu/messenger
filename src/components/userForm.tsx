@@ -34,6 +34,7 @@ export default function UserForm({ buttonText, onSubmit }: UserFormProps) {
 							className="bg-gray-800 border-gray-700 placeholder-gray-500 text-white mt-2"
 							maxLength={30}
 							required
+							autoFocus
 						/>
 					</div>
 					<div className="space-y-2">
