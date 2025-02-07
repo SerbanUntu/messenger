@@ -32,6 +32,7 @@ export default function Dashboard() {
 
 	const [inputUsers, setInputUsers] = useState<User[]>([])
 	const [usernameExists, setUsernameExists] = useState<boolean | null>(null)
+	const chatContainerRef = useRef(null)
 
 	const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
 	const selectedConversationRef = useRef(selectedConversation)
@@ -273,6 +274,12 @@ export default function Dashboard() {
 		}
 	}, [socket])
 
+	useEffect(() => {
+		if (chatContainerRef.current) {
+			(chatContainerRef.current as HTMLDivElement).scrollTop = (chatContainerRef.current as HTMLDivElement).scrollHeight
+		}
+	}, [messages])
+
 	return (
 		<div className="flex h-screen bg-dark-navy relative overflow-hidden">
 			{/* Mobile menu button */}
@@ -504,18 +511,18 @@ export default function Dashboard() {
 				/>
 			)}
 
-			{/* Chat area - now with responsive padding */}
+			{/* Chat area */}
 			{selectedConversation ? (
 				<div className="flex-1 flex flex-col">
-					{/* Chat header with adjusted padding for mobile */}
-					<div className="p-4 pl-16 lg:pl-4 border-b border-gray-800 flex items-center gap-3">
+					{/* Chat header */}
+					<div className="sticky top-0 z-10 bg-dark-navy p-4 pl-16 lg:pl-4 border-b border-gray-800 flex items-center gap-3">
 						<span className="text-white font-medium">
 							{getConversationName(selectedConversation.users, user!)}
 						</span>
 					</div>
 
-					{/* Messages */}
-					<div className="flex-1 overflow-y-auto p-4 space-y-4">
+					{/* Messages container */}
+					<div className="flex-1 overflow-y-auto p-4 space-y-4" ref={chatContainerRef}>
 						{messages.map(message => (
 							<div
 								key={message.message_id}
