@@ -6,14 +6,15 @@ import Login from './login/page'
 import SignUp from './sign-up/page'
 import NotFound from './404/page'
 import Dashboard from './dashboard/page'
-import { UserWithSocket } from '../types'
+import { User } from '../types'
 import UserContext from '../contexts/user-context'
 import { server } from '../constants'
 import Root from './root'
-import { io } from 'socket.io-client'
+import { io, Socket } from 'socket.io-client'
 
 const App = () => {
-	const [user, setUser] = useState<UserWithSocket | null>(null)
+	const [socket, setSocket] = useState<Socket | null>(null)
+	const [user, setUser] = useState<User | null>(null)
 	const [isUserLoading, setIsUserLoading] = useState(true)
 
 	useEffect(() => {
@@ -22,12 +23,13 @@ const App = () => {
 		})
 		userPromise.then(res => {
 			if (res.ok) {
-				res.json().then(userWithoutSocket => {
-					const socket = io(server);
-					socket.on('connect', () => {
-						setUser({ ...userWithoutSocket, socket })
+				res.json().then((fetchedUser: User) => {
+					const newSocket = io(server, { query: { user_id: fetchedUser.user_id } })
+					newSocket.on('connect', () => {
+						setUser(fetchedUser)
 						setIsUserLoading(false)
 					})
+					setSocket(newSocket)
 				})
 			} else {
 				setUser(null)
@@ -42,7 +44,7 @@ const App = () => {
 				<Routes>
 					<Route element={<Root />}>
 						<Route path="/" element={<Landing />} />
-						<Route path="/dashboard" element={<Dashboard />} />
+						<Route path="/dashboard" element={<Dashboard socket={socket} />} />
 						<Route path="/sign-up" element={<SignUp />} />
 						<Route path="/login" element={<Login />} />
 						<Route path="*" element={<NotFound />} />

@@ -1,4 +1,5 @@
 import './env.ts'
+import './websockets.ts'
 import path from 'path'
 import { createConversation, createMessage, createUser, getAllConversations, getMessagesInConversation, getUserByUsername, loginUser } from './actions.ts'
 import { validateConversation, validateMessage, validateUser } from './validations.ts'
@@ -9,16 +10,14 @@ import cookieParser from 'cookie-parser'
 import { fileURLToPath } from 'url'
 import compression from './compression.ts'
 import { createServer } from 'http'
-import { Server } from 'socket.io'
 import corsOptions from './cors.ts'
+import { initIo } from './websockets.ts'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express()
 const server = createServer(app);
-export const io = new Server(server, {
-	cors: corsOptions
-})
+initIo(server)
 
 app.use(cors(corsOptions))
 
@@ -58,8 +57,4 @@ app.get('/*', (_, res) => {
 
 server.listen(3000, () => {
 	console.log('Server is running on port 3000')
-})
-
-io.on('connection', (socket) => {
-	console.log('A user connected')
 })

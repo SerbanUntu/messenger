@@ -2,6 +2,7 @@ import db from './db.ts'
 import { generateToken, getEncryptedPassword } from './auth.ts'
 import type { Request, Response } from 'express'
 import type { Conversation, Message, User } from '../types.ts'
+import { emitMessage } from './websockets.ts'
 
 export const createUser = async (req: Request, res: Response) => {
 	try {
@@ -142,7 +143,9 @@ export const createMessage = async (req: Request, res: Response) => {
 			'INSERT INTO messages(conversation_id, author_id, sent_at, content) VALUES ($1, $2, $3, $4) RETURNING message_id, conversation_id, author_id, sent_at, content',
 			[conversation_id, message.author_id, new Date(), message.content]
 		);
+		const sentMessage: Message = result.rows[0];
 		res.status(201).json(result.rows[0]);
+		emitMessage(sentMessage)
 	} catch (err) {
 		handleError(err, res);
 	}

@@ -18,8 +18,13 @@ import { Label } from '@radix-ui/react-label'
 import { Input } from '@/src/components/ui/input'
 import { Conversation, Message, User } from '@/src/types'
 import { formatDate, getConversationName } from '@/src/lib/utils'
+import { Socket } from 'socket.io-client'
 
-export default function Dashboard() {
+interface DashboardProps {
+	socket: Socket | null
+}
+
+export default function Dashboard({ socket }: DashboardProps) {
 	const navigate = useNavigate()
 	const { user, isUserLoading } = useContext(UserContext)
 
@@ -202,6 +207,20 @@ export default function Dashboard() {
 		)
 	}
 
+	const receiveMessage = (message: Message) => {
+		if (message.conversation_id === selectedConversation?.conversation_id) {
+			messages.push(message)
+		} else {
+			setConversations(
+				conversations.map(c => {
+					if (c.conversation_id === message.conversation_id)
+						return { ...c, newMessages: c.newMessages + 1, lastMessage: message }
+					return c
+				}),
+			)
+		}
+	}
+
 	const handleLogOut = async () => {
 		await fetch(server + '/api/v1/logout', {
 			credentials: 'include',
@@ -230,6 +249,12 @@ export default function Dashboard() {
 			setUsernameExists(null)
 		}
 	}, [isNewChatDialogOpen, isNewGroupDialogOpen])
+
+	useEffect(() => {
+		if (!socket) return
+
+		socket.on('message', receiveMessage)
+	}, [socket])
 
 	return (
 		<div className="flex h-screen bg-dark-navy relative overflow-hidden">

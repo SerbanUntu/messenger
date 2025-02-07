@@ -14,4 +14,9 @@ export const getUserById = async (id: number) => {
 	return result.rows[0]
 }
 
+export const getUsersInConversation = async (conversation_id: number, except: number = -1) => {
+	const result = await db.query('SELECT user_id FROM participants WHERE conversation_id = $1 AND user_id <> $2', [conversation_id, except])
+	return result.rows
+}
+
 export default db

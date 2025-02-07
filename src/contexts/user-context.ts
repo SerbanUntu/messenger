@@ -1,9 +1,9 @@
 import { createContext } from 'react';
-import { UserWithSocket } from '../types';
+import { User } from '../types';
 
 interface UserContextType {
-	user: UserWithSocket | null;
-	setUser: (user: UserWithSocket | null) => void;
+	user: User | null;
+	setUser: (user: User | null) => void;
 	isUserLoading: boolean;
 	setIsUserLoading: (isUserLoading: boolean) => void;
 }
