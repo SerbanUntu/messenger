@@ -17,6 +17,11 @@ export const validateUser = (req: Request, res: Response, next: NextFunction) =>
 		return
 	}
 
+	if (!/^[A-Za-z0-9\_]*$/.test(user.username)) {
+		res.status(400).json({ error: "Username can only contain letters, numbers and underscores" });
+		return
+	}
+
 	if (!user.password || typeof user.password !== 'string') {
 		res.status(400).json({ error: "Invalid password" });
 		return
