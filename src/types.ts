@@ -1,6 +1,14 @@
+import { Socket } from "socket.io-client"
+
 export type User = {
 	user_id: number,
 	username: string
+}
+
+export type UserWithSocket = {
+	user_id: number,
+	username: string,
+	socket: Socket
 }
 
 export type Conversation = {

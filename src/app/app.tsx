@@ -6,13 +6,14 @@ import Login from './login/page'
 import SignUp from './sign-up/page'
 import NotFound from './404/page'
 import Dashboard from './dashboard/page'
-import { User } from '../types'
+import { UserWithSocket } from '../types'
 import UserContext from '../contexts/user-context'
 import { server } from '../constants'
 import Root from './root'
+import { io } from 'socket.io-client'
 
 const App = () => {
-	const [user, setUser] = useState<User | null>(null)
+	const [user, setUser] = useState<UserWithSocket | null>(null)
 	const [isUserLoading, setIsUserLoading] = useState(true)
 
 	useEffect(() => {
@@ -21,9 +22,12 @@ const App = () => {
 		})
 		userPromise.then(res => {
 			if (res.ok) {
-				res.json().then(user => {
-					setUser(user)
-					setIsUserLoading(false)
+				res.json().then(userWithoutSocket => {
+					const socket = io(server);
+					socket.on('connect', () => {
+						setUser({ ...userWithoutSocket, socket })
+						setIsUserLoading(false)
+					})
 				})
 			} else {
 				setUser(null)

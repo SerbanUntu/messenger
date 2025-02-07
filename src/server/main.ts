@@ -8,16 +8,19 @@ import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import { fileURLToPath } from 'url'
 import compression from './compression.ts'
+import { createServer } from 'http'
+import { Server } from 'socket.io'
+import corsOptions from './cors.ts'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express()
+const server = createServer(app);
+export const io = new Server(server, {
+	cors: corsOptions
+})
 
-// Enable CORS for requests coming from your client (http://localhost:8080)
-app.use(cors({
-	origin: 'http://localhost:8080',
-	credentials: true, // Only necessary if you intend to send cookies in cross-origin requests.
-}))
+app.use(cors(corsOptions))
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
@@ -53,6 +56,10 @@ app.get('/*', (_, res) => {
 	res.sendFile(path.join(__dirname, '..', '..', 'dist', 'index.html'))
 })
 
-app.listen(3000, () => {
+server.listen(3000, () => {
 	console.log('Server is running on port 3000')
+})
+
+io.on('connection', (socket) => {
+	console.log('A user connected')
 })

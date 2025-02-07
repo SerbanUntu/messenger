@@ -225,7 +225,6 @@ export default function Dashboard() {
 
 	useEffect(() => {
 		if (!isNewChatDialogOpen && !isNewGroupDialogOpen) {
-			console.log('TEST')
 			setUsername('')
 			setInputUsers([])
 			setUsernameExists(null)
