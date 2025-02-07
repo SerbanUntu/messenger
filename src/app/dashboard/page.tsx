@@ -123,7 +123,7 @@ export default function Dashboard() {
 				? { ...data.lastMessage, sent_at: new Date(data.lastMessage.sent_at) }
 				: null,
 		}
-		setConversations([...conversations, newConversation])
+		setConversations(prev => [newConversation, ...prev])
 		setSelectedConversation(newConversation)
 		setMessages([])
 	}
@@ -230,6 +230,10 @@ export default function Dashboard() {
 		if (isActive) setMessages(prevMessages => [...prevMessages, message])
 	}
 
+	const receiveConversation = (conversation: Conversation) => {
+		setConversations(prevConversations => [conversation, ...prevConversations])
+	}
+
 	const handleLogOut = async () => {
 		await fetch(server + '/api/v1/logout', {
 			credentials: 'include',
@@ -271,10 +275,14 @@ export default function Dashboard() {
 			receiveMessage({ ...message, sent_at: new Date(message.sent_at) }),
 		)
 
+		socket.on('conversation', receiveConversation)
+
 		return () => {
 			socket.off('message', message =>
 				receiveMessage({ ...message, sent_at: new Date(message.sent_at) }),
 			)
+
+			socket.off('conversation', receiveConversation)
 		}
 	}, [socket])
 
@@ -400,8 +408,9 @@ export default function Dashboard() {
 											{inputUsers.map(iu => (
 												<div
 													key={iu.username}
+													title={iu.username}
 													className="bg-gray-800 text-white px-2 py-1 rounded-full flex items-center">
-													<span>{iu.username}</span>
+													<span className='max-w-[250px] min-w-0 truncate'>{iu.username}</span>
 													<Button
 														type="button"
 														variant="ghost"
@@ -480,7 +489,9 @@ export default function Dashboard() {
 								fetchMessages(conversation.conversation_id)
 							}}
 							className={`p-4 cursor-pointer hover:bg-gray-800/50 ${
-								selectedConversation?.conversation_id === conversation.conversation_id ? 'bg-gray-800/50' : ''
+								selectedConversation?.conversation_id === conversation.conversation_id
+									? 'bg-gray-800/50'
+									: ''
 							}`}>
 							<div className="flex items-center gap-3">
 								<div className="flex-1 min-w-0">

@@ -2,7 +2,7 @@ import db from './db.ts'
 import { generateToken, getEncryptedPassword } from './auth.ts'
 import type { Request, Response } from 'express'
 import type { Conversation, Message, User } from '../types.ts'
-import { emitMessage } from './websockets.ts'
+import { emitConversation, emitMessage } from './websockets.ts'
 
 export const createUser = async (req: Request, res: Response) => {
 	try {
@@ -73,14 +73,23 @@ export const createConversation = async (req: Request, res: Response) => {
 			[new Date()]
 		)
 		const conversation_id = result.rows[0].conversation_id;
-		//TODO Refactor this to use one single query
-		for (const user of users) {
-			await db.query(
-				'INSERT INTO participants(conversation_id, user_id) VALUES ($1, $2)',
-				[conversation_id, user.user_id]
-			)
+
+		let queryString = "INSERT INTO participants(conversation_id, user_id) VALUES ";
+		const paramsArr = [];
+		for (let i = 0; i <= users.length - 1; i++) {
+			if (i > 0) queryString += ", ";
+			queryString += `($${2 * i + 1}, $${2 * i + 2})`
+			paramsArr.push(conversation_id, users[i].user_id);
 		}
-		res.status(201).json({ conversation_id, users })
+		await db.query(
+			queryString,
+			paramsArr
+		);
+		const newConversation: Conversation = { conversation_id, users, newMessages: 0, lastMessage: null }
+		res.status(201).json(newConversation)
+		const targets = [...users];
+		targets.pop(); // The author is on the last position in the array of users
+		emitConversation(targets, newConversation)
 	} catch (err) {
 		handleError(err, res);
 	}

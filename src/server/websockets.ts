@@ -1,6 +1,6 @@
 import { Server as HttpServer } from "http";
 import { Server as IoServer, Socket } from "socket.io";
-import type { Message } from "../types.ts";
+import type { Conversation, Message, User } from "../types.ts";
 import { getUsersInConversation } from "./db.ts";
 import corsOptions from "./cors.ts";
 
@@ -23,11 +23,6 @@ export const initIo = (server: HttpServer) => {
 	})
 }
 
-export const getIo = (): IoServer => {
-	if (!io) throw new Error("Server not initialized")
-	return io
-}
-
 export const emitMessage = async (message: Message) => {
 	const targets = await getUsersInConversation(message.conversation_id, message.author_id) as { user_id: number }[]
 	targets.forEach(u => {
@@ -35,6 +30,16 @@ export const emitMessage = async (message: Message) => {
 		if (socket) {
 			socket.emit('message', message)
 			console.log(`Message from user ${message.author_id} received by ${u.user_id}`)
+		}
+	})
+}
+
+export const emitConversation = async (users: User[], conversation: Conversation) => {
+	users.forEach(u => {
+		const socket = sockets.get(u.user_id)
+		if (socket) {
+			socket.emit('conversation', conversation)
+			console.log(`Conversation created by user ${users[users.length - 1].user_id} received by ${u.user_id}`)
 		}
 	})
 }
