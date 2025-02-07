@@ -11,14 +11,13 @@ export default function SignUp() {
 
 	const onSubmit = async (e: React.FormEvent, username: string, password: string) => {
 		e.preventDefault()
-		const res = await fetch(server + '/api/v1/users', {
+		const res = await fetch(`${server}/api/v1/users`, {
 			method: 'POST',
 			body: JSON.stringify({
 				username,
 				password,
 			}),
 			headers: {
-				Host: 'localhost:3000',
 				'Content-Type': 'application/json',
 			},
 		})

@@ -16,7 +16,7 @@ const App = () => {
 	const [isUserLoading, setIsUserLoading] = useState(true)
 
 	useEffect(() => {
-		const userPromise = fetch(server + '/api/v1/users/currentUser', {
+		const userPromise = fetch(`${server}/api/v1/users/currentUser`, {
 			credentials: 'include',
 		})
 		userPromise.then(res => {

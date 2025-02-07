@@ -1,4 +1,6 @@
+import { server } from "../constants.ts";
+
 export default {
-	origin: 'http://localhost:8080',
+	origin: server,
 	credentials: true
 }

@@ -245,7 +245,7 @@ export default function Dashboard() {
 	}
 
 	const handleLogOut = async () => {
-		await fetch(server + '/api/v1/logout', {
+		await fetch(`${server}/api/v1/logout`, {
 			credentials: 'include',
 		})
 		toast({

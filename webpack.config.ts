@@ -2,7 +2,13 @@ import path from 'path'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import { fileURLToPath } from 'url'
 import CompressionPlugin from 'compression-webpack-plugin'
-import type { Configuration } from 'webpack'
+import type { Configuration as WebpackConfig } from 'webpack'
+import type { Configuration as DevServerConfig } from 'webpack-dev-server'
+
+// Merge both Configuration types
+interface Configuration extends WebpackConfig {
+	devServer?: DevServerConfig
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -93,7 +99,7 @@ const prodConfig: Configuration = {
 	devtool: 'source-map',
 }
 
-export default (_, argv): Configuration => {
+export default (_, argv: { mode?: string }): Configuration => {
 	if (argv.mode === 'development') {
 		return { ...commonConfig, ...devConfig }
 	}

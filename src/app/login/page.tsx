@@ -13,7 +13,7 @@ export default function Login() {
 	const onSubmit = async (e: React.FormEvent, username: string, password: string) => {
 		e.preventDefault()
 
-		const res = await fetch(server + '/api/v1/login', {
+		const res = await fetch(`${server}/api/v1/login`, {
 			method: 'POST',
 			credentials: 'include',
 			body: JSON.stringify({
@@ -21,7 +21,6 @@ export default function Login() {
 				password,
 			}),
 			headers: {
-				Host: 'localhost:3000',
 				'Content-Type': 'application/json',
 			},
 		})

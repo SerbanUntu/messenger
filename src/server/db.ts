@@ -7,6 +7,7 @@ const db = new pg.Pool({
 	password: process.env.DB_PASSWORD,
 	database: process.env.DB_NAME,
 	max: 10,
+	ssl: true
 })
 
 export const getUserById = async (id: number) => {
