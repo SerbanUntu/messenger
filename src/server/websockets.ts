@@ -29,8 +29,12 @@ export const getIo = (): IoServer => {
 }
 
 export const emitMessage = async (message: Message) => {
-	const targets = await getUsersInConversation(message.conversation_id, message.author_id) as number[]
-	targets.forEach(id => {
-		sockets.get(id)?.emit('message', message)
+	const targets = await getUsersInConversation(message.conversation_id, message.author_id) as { user_id: number }[]
+	targets.forEach(u => {
+		const socket = sockets.get(u.user_id)
+		if (socket) {
+			socket.emit('message', message)
+			console.log(`Message from user ${message.author_id} received by ${u.user_id}`)
+		}
 	})
 }

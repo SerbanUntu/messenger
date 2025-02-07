@@ -10,10 +10,8 @@ import { User } from '../types'
 import UserContext from '../contexts/user-context'
 import { server } from '../constants'
 import Root from './root'
-import { io, Socket } from 'socket.io-client'
 
 const App = () => {
-	const [socket, setSocket] = useState<Socket | null>(null)
 	const [user, setUser] = useState<User | null>(null)
 	const [isUserLoading, setIsUserLoading] = useState(true)
 
@@ -24,12 +22,8 @@ const App = () => {
 		userPromise.then(res => {
 			if (res.ok) {
 				res.json().then((fetchedUser: User) => {
-					const newSocket = io(server, { query: { user_id: fetchedUser.user_id } })
-					newSocket.on('connect', () => {
-						setUser(fetchedUser)
-						setIsUserLoading(false)
-					})
-					setSocket(newSocket)
+					setUser(fetchedUser)
+					setIsUserLoading(false)
 				})
 			} else {
 				setUser(null)
@@ -44,7 +38,7 @@ const App = () => {
 				<Routes>
 					<Route element={<Root />}>
 						<Route path="/" element={<Landing />} />
-						<Route path="/dashboard" element={<Dashboard socket={socket} />} />
+						<Route path="/dashboard" element={<Dashboard />} />
 						<Route path="/sign-up" element={<SignUp />} />
 						<Route path="/login" element={<Login />} />
 						<Route path="*" element={<NotFound />} />

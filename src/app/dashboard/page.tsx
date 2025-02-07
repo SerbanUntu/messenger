@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react'
+import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { Button } from '@/src/components/ui/button'
 import { LogOut, Menu, Search, Send, UserPlus, Users, X } from 'lucide-react'
 import UserContext from '@/src/contexts/user-context'
@@ -18,15 +18,12 @@ import { Label } from '@radix-ui/react-label'
 import { Input } from '@/src/components/ui/input'
 import { Conversation, Message, User } from '@/src/types'
 import { formatDate, getConversationName } from '@/src/lib/utils'
-import { Socket } from 'socket.io-client'
+import { io, Socket } from 'socket.io-client'
 
-interface DashboardProps {
-	socket: Socket | null
-}
-
-export default function Dashboard({ socket }: DashboardProps) {
+export default function Dashboard() {
 	const navigate = useNavigate()
 	const { user, isUserLoading } = useContext(UserContext)
+	const [socket, setSocket] = useState<Socket | null>(null)
 
 	const [isNewChatDialogOpen, setIsNewChatDialogOpen] = useState(false)
 	const [isNewGroupDialogOpen, setIsNewGroupDialogOpen] = useState(false)
@@ -37,7 +34,8 @@ export default function Dashboard({ socket }: DashboardProps) {
 	const [usernameExists, setUsernameExists] = useState<boolean | null>(null)
 
 	const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
-	const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+	const selectedConversationRef = useRef(selectedConversation)
+	const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 	const [conversations, setConversations] = useState<Conversation[]>([])
 	const [messages, setMessages] = useState<Message[]>([])
 	const [currentMessage, setCurrentMessage] = useState('')
@@ -208,11 +206,17 @@ export default function Dashboard({ socket }: DashboardProps) {
 	}
 
 	const receiveMessage = (message: Message) => {
-		if (message.conversation_id === selectedConversation?.conversation_id) {
-			messages.push(message)
+		if (message.conversation_id === selectedConversationRef.current?.conversation_id) {
+			setConversations(prevConversations =>
+				prevConversations.map(c => {
+					if (c.conversation_id === message.conversation_id) return { ...c, lastMessage: message }
+					return c
+				}),
+			)
+			setMessages(prevMessages => [...prevMessages, message])
 		} else {
-			setConversations(
-				conversations.map(c => {
+			setConversations(prevConversations =>
+				prevConversations.map(c => {
 					if (c.conversation_id === message.conversation_id)
 						return { ...c, newMessages: c.newMessages + 1, lastMessage: message }
 					return c
@@ -239,6 +243,7 @@ export default function Dashboard({ socket }: DashboardProps) {
 		}
 		if (user && !isUserLoading) {
 			getAllConversations()
+			setSocket(io(server, { query: { user_id: user.user_id } }))
 		}
 	}, [user, isUserLoading])
 
@@ -251,9 +256,21 @@ export default function Dashboard({ socket }: DashboardProps) {
 	}, [isNewChatDialogOpen, isNewGroupDialogOpen])
 
 	useEffect(() => {
+		selectedConversationRef.current = selectedConversation
+	}, [selectedConversation])
+
+	useEffect(() => {
 		if (!socket) return
 
-		socket.on('message', receiveMessage)
+		socket.on('message', message =>
+			receiveMessage({ ...message, sent_at: new Date(message.sent_at) }),
+		)
+
+		return () => {
+			socket.off('message', message =>
+				receiveMessage({ ...message, sent_at: new Date(message.sent_at) }),
+			)
+		}
 	}, [socket])
 
 	return (
