@@ -182,7 +182,15 @@ export default function Dashboard() {
 			})
 			return
 		}
-		setMessages([...messages, { ...data, sent_at: new Date(data.sent_at) }])
+		const newMessage = { ...data, sent_at: new Date(data.sent_at) }
+		setMessages([...messages, newMessage])
+		setConversations(prevConversations =>
+			prevConversations.map(c => {
+				if (c.conversation_id === selectedConversation?.conversation_id)
+					return { ...c, lastMessage: newMessage }
+				return c
+			}),
+		)
 	}
 
 	const fetchMessages = async (conversation_id: number) => {
@@ -207,23 +215,19 @@ export default function Dashboard() {
 	}
 
 	const receiveMessage = (message: Message) => {
-		if (message.conversation_id === selectedConversationRef.current?.conversation_id) {
-			setConversations(prevConversations =>
-				prevConversations.map(c => {
-					if (c.conversation_id === message.conversation_id) return { ...c, lastMessage: message }
-					return c
-				}),
-			)
-			setMessages(prevMessages => [...prevMessages, message])
-		} else {
-			setConversations(prevConversations =>
-				prevConversations.map(c => {
-					if (c.conversation_id === message.conversation_id)
-						return { ...c, newMessages: c.newMessages + 1, lastMessage: message }
-					return c
-				}),
-			)
-		}
+		const isActive = message.conversation_id === selectedConversationRef.current?.conversation_id
+		setConversations(prevConversations =>
+			prevConversations.map(c => {
+				if (c.conversation_id === message.conversation_id)
+					return {
+						...c,
+						lastMessage: message,
+						newMessages: isActive ? c.newMessages : c.newMessages + 1,
+					}
+				return c
+			}),
+		)
+		if (isActive) setMessages(prevMessages => [...prevMessages, message])
 	}
 
 	const handleLogOut = async () => {
@@ -276,7 +280,9 @@ export default function Dashboard() {
 
 	useEffect(() => {
 		if (chatContainerRef.current) {
-			(chatContainerRef.current as HTMLDivElement).scrollTop = (chatContainerRef.current as HTMLDivElement).scrollHeight
+			;(chatContainerRef.current as HTMLDivElement).scrollTop = (
+				chatContainerRef.current as HTMLDivElement
+			).scrollHeight
 		}
 	}, [messages])
 
@@ -297,12 +303,14 @@ export default function Dashboard() {
 					isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
 				} lg:translate-x-0 w-80 border-r border-gray-800 absolute lg:relative inset-y-0 left-0 z-40 transition-transform duration-300 ease-in-out bg-dark-navy flex flex-col h-screen`}>
 				{/* Header */}
-				<div className="shrink-0 p-4 py-[10px] border-b border-gray-800 flex items-center justify-end gap-0.5">
-					<span className="text-white font-medium">{user?.username}</span>
+				<div className="shrink-0 p-4 py-[10px] border-b border-gray-800 flex items-center justify-end gap-0.5 min-w-0">
+					<span className="text-white font-medium truncate flex-1 text-right">
+						{user?.username}
+					</span>
 					<Button
 						variant="ghost"
 						size="icon"
-						className="text-gray-400 hover:text-white cursor-pointer hover:bg-gray-900"
+						className="text-gray-400 hover:text-white cursor-pointer hover:bg-gray-900 shrink-0"
 						title="Log out"
 						onClick={handleLogOut}>
 						<LogOut className="h-5 w-5" />
@@ -463,7 +471,7 @@ export default function Dashboard() {
 						<div
 							key={conversation.conversation_id}
 							onClick={() => {
-								if (selectedConversation === conversation) return
+								if (selectedConversation?.conversation_id === conversation.conversation_id) return
 								setMessages([])
 								setSelectedConversation(conversation)
 								conversation.newMessages = 0
@@ -472,7 +480,7 @@ export default function Dashboard() {
 								fetchMessages(conversation.conversation_id)
 							}}
 							className={`p-4 cursor-pointer hover:bg-gray-800/50 ${
-								selectedConversation === conversation ? 'bg-gray-800/50' : ''
+								selectedConversation?.conversation_id === conversation.conversation_id ? 'bg-gray-800/50' : ''
 							}`}>
 							<div className="flex items-center gap-3">
 								<div className="flex-1 min-w-0">
@@ -513,10 +521,10 @@ export default function Dashboard() {
 
 			{/* Chat area */}
 			{selectedConversation ? (
-				<div className="flex-1 flex flex-col">
+				<div className="flex-1 flex flex-col min-w-0">
 					{/* Chat header */}
-					<div className="sticky top-0 z-10 bg-dark-navy p-4 pl-16 lg:pl-4 border-b border-gray-800 flex items-center gap-3">
-						<span className="text-white font-medium">
+					<div className="sticky top-0 z-10 bg-dark-navy p-4 pl-16 lg:pl-4 border-b border-gray-800 flex items-center gap-3 min-w-0">
+						<span className="text-white font-medium truncate flex-1">
 							{getConversationName(selectedConversation.users, user!)}
 						</span>
 					</div>
@@ -530,21 +538,25 @@ export default function Dashboard() {
 									message.author_id === user?.user_id ? 'justify-end' : 'justify-start'
 								}`}>
 								<div
-									className={`max-w-[70%] rounded-lg px-4 py-2 ${
+									className={`max-w-[70%] min-w-0 rounded-lg px-4 py-2 ${
 										message.author_id === user?.user_id
 											? 'bg-messenger-blue text-white'
 											: 'bg-gray-800 text-white'
 									}`}>
-									<div className="flex justify-between items-baseline gap-4">
-										<span className="font-medium text-sm">
+									<div className="flex justify-between items-baseline gap-4 min-w-0">
+										<span className="font-medium text-sm truncate">
 											{message.author_id === user?.user_id
 												? 'You'
 												: selectedConversation.users.find(u => u.user_id === message.author_id)
 														?.username ?? 'Other user'}
 										</span>
-										<span className="text-xs opacity-70">{formatDate(message.sent_at)}</span>
+										<span className="text-xs opacity-70 shrink-0">
+											{formatDate(message.sent_at)}
+										</span>
 									</div>
-									<p className="mt-1">{message.content}</p>
+									<p className="mt-1 break-words whitespace-pre-wrap [word-break:break-word]">
+										{message.content}
+									</p>
 								</div>
 							</div>
 						))}
