@@ -39,11 +39,11 @@ app.post('/api/v1/users', validateUser, createUser)
 app.post('/api/v1/login', validateUser, loginUser)
 app.get('/api/v1/logout', invalidateUser);
 app.get('/api/v1/users/currentUser', authUser, getCurrentUser)
-app.get('/api/v1/users/:username', getUserByUsername)
-app.post('/api/v1/conversations', validateConversation, createConversation)
-app.get('/api/v1/users/:id/conversations', getAllConversations)
-app.post('/api/v1/conversations/:id', validateMessage, createMessage)
-app.get('/api/v1/conversations/:id/messages', getMessagesInConversation)
+app.get('/api/v1/users/:username', authUser, getUserByUsername)
+app.post('/api/v1/conversations', authUser, validateConversation, createConversation)
+app.get('/api/v1/users/:id/conversations', authUser, getAllConversations)
+app.post('/api/v1/conversations/:id', authUser, validateMessage, createMessage)
+app.get('/api/v1/conversations/:id/messages', authUser, getMessagesInConversation)
 
 app.get('/robots.txt', (_, res) => {
 	res.type('text/plain')

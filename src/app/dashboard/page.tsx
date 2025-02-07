@@ -22,7 +22,7 @@ import { io, Socket } from 'socket.io-client'
 
 export default function Dashboard() {
 	const navigate = useNavigate()
-	const { user, isUserLoading } = useContext(UserContext)
+	const { user, isUserLoading, setUser } = useContext(UserContext)
 	const [socket, setSocket] = useState<Socket | null>(null)
 
 	const [isNewChatDialogOpen, setIsNewChatDialogOpen] = useState(false)
@@ -42,7 +42,6 @@ export default function Dashboard() {
 	const [currentMessage, setCurrentMessage] = useState('')
 
 	const checkUsername = async (username: string, isAppended: boolean) => {
-		//TODO Remove the 5 lines below from each DB call
 		if (isUserLoading) return
 		if (!user) {
 			navigate('/login')
@@ -60,7 +59,8 @@ export default function Dashboard() {
 			setUsernameExists(true)
 			return
 		}
-		const res = await fetch(`${server}/api/v1/users/${username}`)
+		const res = await fetch(`${server}/api/v1/users/${username}`, { credentials: 'include' })
+		checkPermissions(res)
 		const data = (await res.json()) as User
 		if (data.username === username) {
 			// Server should return a valid User object in the body
@@ -105,7 +105,9 @@ export default function Dashboard() {
 			headers: {
 				'Content-Type': 'application/json',
 			},
+			credentials: 'include',
 		})
+		checkPermissions(res)
 		const data = await res.json()
 		if (!res.ok) {
 			toast({
@@ -134,7 +136,10 @@ export default function Dashboard() {
 			navigate('/login')
 			return
 		}
-		const res = await fetch(`${server}/api/v1/users/${user.user_id}/conversations`)
+		const res = await fetch(`${server}/api/v1/users/${user.user_id}/conversations`, {
+			credentials: 'include',
+		})
+		checkPermissions(res)
 		const data = await res.json()
 		if (!res.ok) {
 			toast({
@@ -171,8 +176,10 @@ export default function Dashboard() {
 				headers: {
 					'Content-Type': 'application/json',
 				},
+				credentials: 'include',
 			},
 		)
+		checkPermissions(res)
 		const data = await res.json()
 		if (!res.ok) {
 			toast({
@@ -199,7 +206,10 @@ export default function Dashboard() {
 			navigate('/login')
 			return
 		}
-		const res = await fetch(`${server}/api/v1/conversations/${conversation_id}/messages`)
+		const res = await fetch(`${server}/api/v1/conversations/${conversation_id}/messages`, {
+			credentials: 'include',
+		})
+		checkPermissions(res)
 		const data = await res.json()
 		if (!res.ok) {
 			toast({
@@ -243,7 +253,12 @@ export default function Dashboard() {
 			description: 'You are no longer logged in',
 			variant: 'success',
 		})
+		setUser(null)
 		navigate('/login')
+	}
+
+	const checkPermissions = (res: Response) => {
+		if (res.status === 401) setUser(null) 
 	}
 
 	useEffect(() => {
@@ -410,7 +425,7 @@ export default function Dashboard() {
 													key={iu.username}
 													title={iu.username}
 													className="bg-gray-800 text-white px-2 py-1 rounded-full flex items-center">
-													<span className='max-w-[250px] min-w-0 truncate'>{iu.username}</span>
+													<span className="max-w-[250px] min-w-0 truncate">{iu.username}</span>
 													<Button
 														type="button"
 														variant="ghost"
@@ -475,51 +490,55 @@ export default function Dashboard() {
 				</div>
 
 				{/* Conversations list */}
-				<div className="flex-1 overflow-y-auto">
-					{conversations.map(conversation => (
-						<div
-							key={conversation.conversation_id}
-							onClick={() => {
-								if (selectedConversation?.conversation_id === conversation.conversation_id) return
-								setMessages([])
-								setSelectedConversation(conversation)
-								conversation.newMessages = 0
-								setIsSidebarOpen(false) // Close sidebar on mobile after selection
-								setCurrentMessage('')
-								fetchMessages(conversation.conversation_id)
-							}}
-							className={`p-4 cursor-pointer hover:bg-gray-800/50 ${
-								selectedConversation?.conversation_id === conversation.conversation_id
-									? 'bg-gray-800/50'
-									: ''
-							}`}>
-							<div className="flex items-center gap-3">
-								<div className="flex-1 min-w-0">
-									<div className="flex justify-between items-baseline">
-										<p className="text-white font-medium truncate">
-											{getConversationName(conversation.users, user!)}
-										</p>
-										<span className="text-xs text-gray-400">
-											{conversation.lastMessage ? formatDate(conversation.lastMessage.sent_at) : ''}
-										</span>
-									</div>
-									<div className="flex justify-between items-baseline">
-										<p className="text-sm text-gray-400 truncate">
-											{conversation.lastMessage
-												? conversation.lastMessage.content
-												: 'New conversation'}
-										</p>
-										{conversation.newMessages > 0 && (
-											<div className="text-xs bg-red-400 font-bold rounded-full px-2 py-1 text-white w-4 h-4 flex items-center justify-center ml-2">
-												{conversation.newMessages}
-											</div>
-										)}
+				{user && (
+					<div className="flex-1 overflow-y-auto">
+						{conversations.map(conversation => (
+							<div
+								key={conversation.conversation_id}
+								onClick={() => {
+									if (selectedConversation?.conversation_id === conversation.conversation_id) return
+									setMessages([])
+									setSelectedConversation(conversation)
+									conversation.newMessages = 0
+									setIsSidebarOpen(false) // Close sidebar on mobile after selection
+									setCurrentMessage('')
+									fetchMessages(conversation.conversation_id)
+								}}
+								className={`p-4 cursor-pointer hover:bg-gray-800/50 ${
+									selectedConversation?.conversation_id === conversation.conversation_id
+										? 'bg-gray-800/50'
+										: ''
+								}`}>
+								<div className="flex items-center gap-3">
+									<div className="flex-1 min-w-0">
+										<div className="flex justify-between items-baseline">
+											<p className="text-white font-medium truncate">
+												{getConversationName(conversation.users, user)}
+											</p>
+											<span className="text-xs text-gray-400">
+												{conversation.lastMessage
+													? formatDate(conversation.lastMessage.sent_at)
+													: ''}
+											</span>
+										</div>
+										<div className="flex justify-between items-baseline">
+											<p className="text-sm text-gray-400 truncate">
+												{conversation.lastMessage
+													? conversation.lastMessage.content
+													: 'New conversation'}
+											</p>
+											{conversation.newMessages > 0 && (
+												<div className="text-xs bg-red-400 font-bold rounded-full px-2 py-1 text-white w-4 h-4 flex items-center justify-center ml-2">
+													{conversation.newMessages}
+												</div>
+											)}
+										</div>
 									</div>
 								</div>
 							</div>
-						</div>
-					))}
-				</div>
+						))}
+					</div>
+				)}
 			</div>
 
 			{/* Overlay for mobile */}
@@ -535,9 +554,11 @@ export default function Dashboard() {
 				<div className="flex-1 flex flex-col min-w-0">
 					{/* Chat header */}
 					<div className="sticky top-0 z-10 bg-dark-navy p-4 pl-16 lg:pl-4 border-b border-gray-800 flex items-center gap-3 min-w-0">
-						<span className="text-white font-medium truncate flex-1">
-							{getConversationName(selectedConversation.users, user!)}
-						</span>
+						{user && (
+							<span className="text-white font-medium truncate flex-1">
+								{getConversationName(selectedConversation.users, user)}
+							</span>
+						)}
 					</div>
 
 					{/* Messages container */}

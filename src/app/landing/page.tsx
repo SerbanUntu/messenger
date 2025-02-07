@@ -1,7 +1,13 @@
-import { NavLink } from 'react-router'
+import { NavLink, useNavigate } from 'react-router'
 import { Send, Server, Users, Zap } from 'lucide-react'
+import UserContext from '@/src/contexts/user-context'
+import { useContext } from 'react'
+import { Button } from '@/src/components/ui/button'
 
 export default function Landing() {
+	const { user, isUserLoading } = useContext(UserContext)
+	const navigate = useNavigate()
+
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-dark-navy to-light-navy">
 			<header className="px-4 lg:px-6 h-14 flex items-center">
@@ -39,11 +45,14 @@ export default function Landing() {
 								</p>
 							</div>
 							<div className="space-x-4">
-								<NavLink
-									to="/sign-up"
+								<Button
+									onClick={() => {
+										if (user && !isUserLoading) navigate('/dashboard')
+										else navigate('/sign-up')
+									}}
 									className="inline-flex h-9 items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-1 cursor-pointer">
 									Get Started
-								</NavLink>
+								</Button>
 							</div>
 						</div>
 					</div>

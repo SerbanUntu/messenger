@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React, { useContext, useEffect } from 'react'
 import UserForm from '@/src/components/userForm'
 import { NavLink } from 'react-router'
 import { server } from '@/src/constants'
@@ -8,7 +8,7 @@ import UserContext from '@/src/contexts/user-context'
 
 export default function Login() {
 	const navigate = useNavigate()
-	const { setUser } = useContext(UserContext)
+	const { user, setUser, isUserLoading } = useContext(UserContext)
 
 	const onSubmit = async (e: React.FormEvent, username: string, password: string) => {
 		e.preventDefault()
@@ -45,7 +45,15 @@ export default function Login() {
 	}
 
 	return (
-		<div className="min-h-screen flex flex-col gap-4 items-center justify-center bg-gradient-to-br from-black to-blue-950">
+		<div className="min-h-screen flex flex-col gap-4 items-center justify-center bg-gradient-to-br from-black to-blue-950 relative">
+			{user && !isUserLoading && (
+				<div className="flex items-center gap-4 top-2 absolute border border-amber-600 px-4 py-2 rounded-md text-amber-600">
+					<span>You are already logged in</span>
+					<NavLink className="border rounded-md px-4 py-2 border-white bg-transparent text-white hover:bg-white hover:text-black cursor-pointer" to="/dashboard">
+						Go to app
+					</NavLink>
+				</div>
+			)}
 			<UserForm buttonText="Login" onSubmit={onSubmit} />
 			<p className="text-gray-500 text-sm">
 				Don't have an account?{' '}

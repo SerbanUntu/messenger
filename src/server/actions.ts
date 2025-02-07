@@ -34,12 +34,7 @@ export const loginUser = async (req: Request, res: Response) => {
 		if (result.rows.length === 0) {
 			res.status(401).json({ error: 'Invalid username or password' })
 		} else {
-			const token = generateToken({ user_id: result.rows[0].user_id })
-			res.cookie('messenger_jwt', token, {
-				httpOnly: true,
-				sameSite: 'strict',
-				maxAge: 30 * 24 * 60 * 60 * 1000,
-			})
+			generateToken({ user_id: result.rows[0].user_id }, res)
 			res.status(200).json({ user_id: result.rows[0].user_id, username: result.rows[0].username })
 			await db.query('UPDATE users SET last_login = $1 WHERE user_id = $2', [
 				new Date(),
