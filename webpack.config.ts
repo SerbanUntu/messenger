@@ -1,12 +1,12 @@
 import path from 'path'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import { fileURLToPath } from 'url'
-import zlib from 'zlib'
 import CompressionPlugin from 'compression-webpack-plugin'
+import type { Configuration } from 'webpack'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export default {
+const commonConfig: Configuration = {
 	entry: './src/index.js',
 	module: {
 		rules: [
@@ -67,13 +67,40 @@ export default {
 			algorithm: 'brotliCompress',
 			test: /\.(js|css|html|svg)$/,
 			compressionOptions: {
-				params: {
-					[zlib.constants.BROTLI_PARAM_QUALITY]: 11,
-				},
+				level: 11
 			},
 			threshold: 10240,
 			minRatio: 0.8,
 			deleteOriginalAssets: false,
 		}),
 	],
+}
+
+const devConfig: Configuration = {
+	mode: 'development',
+	devtool: 'inline-source-map',
+	devServer: {
+		static: './dist',
+		historyApiFallback: true,
+	},
+	optimization: {
+		runtimeChunk: 'single',
+	},
+}
+
+const prodConfig: Configuration = {
+	mode: 'production',
+	devtool: 'source-map',
+}
+
+export default (_, argv): Configuration => {
+	if (argv.mode === 'development') {
+		return { ...commonConfig, ...devConfig }
+	}
+
+	if (argv.mode === 'production') {
+		return { ...commonConfig, ...prodConfig }
+	}
+
+	return commonConfig
 }

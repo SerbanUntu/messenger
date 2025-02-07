@@ -6,8 +6,8 @@
 	"type": "module",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"build": "webpack --config webpack.prod.js",
-		"dev": "webpack serve --open --config webpack.dev.js",
+		"build": "webpack --mode=production",
+		"dev": "webpack serve --open --mode=development",
 		"start": "node src/server/main.ts"
 	},
 	"repository": {
