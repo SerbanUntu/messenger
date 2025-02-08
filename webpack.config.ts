@@ -7,14 +7,12 @@ import type { Configuration as DevServerConfig } from 'webpack-dev-server'
 import webpack from 'webpack'
 import dotenv from 'dotenv'
 
-dotenv.config({ path: process.env.NODE_ENV === 'production' ? '.env' : '.env.local' })
-
-const exposedEnvVars = {}
-for (const key in process.env) {
-	if (key.startsWith('EXPOSED_')) {
-		exposedEnvVars[`process.env.${key}`] = JSON.stringify(process.env[key])
-	}
+if (process.env.NODE_ENV === 'development') {
+	dotenv.config({ path: '.env.local' })
 }
+
+//! Change this fallback if running Docker locally
+const serverAddress = process.env.EXPOSED_SERVER_ADDRESS ?? 'https://messenger-1094272270680.europe-west4.run.app'
 
 // Merge both Configuration types
 interface Configuration extends WebpackConfig {
@@ -90,7 +88,9 @@ const commonConfig: Configuration = {
 			minRatio: 0.8,
 			deleteOriginalAssets: false,
 		}),
-		new webpack.DefinePlugin(exposedEnvVars),
+		new webpack.DefinePlugin({
+			"process.env.EXPOSED_SERVER_ADDRESS": JSON.stringify(serverAddress),
+		}),
 	],
 }
 

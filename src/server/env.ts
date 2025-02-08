@@ -6,7 +6,9 @@ if (!process.env.NODE_ENV) {
 	throw new Error('NODE_ENV is not set')
 }
 
-dotenv.config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', process.env.NODE_ENV === 'production' ? '.env' : '.env.local') })
+if (process.env.NODE_ENV === 'development') {
+	dotenv.config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '.env.local') })
+}
 
 const requiredEnvVars = [
 	'JWT_SECRET',
