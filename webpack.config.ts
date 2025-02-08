@@ -4,6 +4,17 @@ import { fileURLToPath } from 'url'
 import CompressionPlugin from 'compression-webpack-plugin'
 import type { Configuration as WebpackConfig } from 'webpack'
 import type { Configuration as DevServerConfig } from 'webpack-dev-server'
+import webpack from 'webpack'
+import dotenv from 'dotenv'
+
+dotenv.config({ path: process.env.NODE_ENV === 'production' ? '.env' : '.env.local' })
+
+const exposedEnvVars = {}
+for (const key in process.env) {
+	if (key.startsWith('EXPOSED_')) {
+		exposedEnvVars[`process.env.${key}`] = JSON.stringify(process.env[key])
+	}
+}
 
 // Merge both Configuration types
 interface Configuration extends WebpackConfig {
@@ -79,6 +90,7 @@ const commonConfig: Configuration = {
 			minRatio: 0.8,
 			deleteOriginalAssets: false,
 		}),
+		new webpack.DefinePlugin(exposedEnvVars),
 	],
 }
 

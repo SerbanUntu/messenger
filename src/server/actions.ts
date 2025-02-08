@@ -82,9 +82,7 @@ export const createConversation = async (req: Request, res: Response) => {
 		);
 		const newConversation: Conversation = { conversation_id, users, newMessages: 0, lastMessage: null }
 		res.status(201).json(newConversation)
-		const targets = [...users];
-		targets.pop(); // The author is on the last position in the array of users
-		emitConversation(targets, newConversation)
+		emitConversation(users, newConversation)
 	} catch (err) {
 		handleError(err, res);
 	}

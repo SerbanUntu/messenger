@@ -3,7 +3,6 @@ import { Button } from '@/src/components/ui/button'
 import { LogOut, Menu, Search, Send, UserPlus, Users, X } from 'lucide-react'
 import UserContext from '@/src/contexts/user-context'
 import { useNavigate } from 'react-router'
-import { server } from '@/src/constants'
 import { toast } from '@/src/hooks/use-toast'
 import {
 	Dialog,
@@ -59,7 +58,9 @@ export default function Dashboard() {
 			setUsernameExists(true)
 			return
 		}
-		const res = await fetch(`${server}/api/v1/users/${username}`, { credentials: 'include' })
+		const res = await fetch(`${process.env.EXPOSED_SERVER_ADDRESS}/api/v1/users/${username}`, {
+			credentials: 'include',
+		})
 		checkPermissions(res)
 		const data = (await res.json()) as User
 		if (data.username === username) {
@@ -99,7 +100,7 @@ export default function Dashboard() {
 				return
 			}
 		}
-		const res = await fetch(`${server}/api/v1/conversations`, {
+		const res = await fetch(`${process.env.EXPOSED_SERVER_ADDRESS}/api/v1/conversations`, {
 			method: 'POST',
 			body: JSON.stringify({ users: [...users, user] }),
 			headers: {
@@ -136,9 +137,12 @@ export default function Dashboard() {
 			navigate('/login')
 			return
 		}
-		const res = await fetch(`${server}/api/v1/users/${user.user_id}/conversations`, {
-			credentials: 'include',
-		})
+		const res = await fetch(
+			`${process.env.EXPOSED_SERVER_ADDRESS}/api/v1/users/${user.user_id}/conversations`,
+			{
+				credentials: 'include',
+			},
+		)
 		checkPermissions(res)
 		const data = await res.json()
 		if (!res.ok) {
@@ -166,7 +170,7 @@ export default function Dashboard() {
 			return
 		}
 		const res = await fetch(
-			`${server}/api/v1/conversations/${selectedConversation.conversation_id}`,
+			`${process.env.EXPOSED_SERVER_ADDRESS}/api/v1/conversations/${selectedConversation.conversation_id}`,
 			{
 				method: 'POST',
 				body: JSON.stringify({
@@ -206,7 +210,7 @@ export default function Dashboard() {
 			navigate('/login')
 			return
 		}
-		const res = await fetch(`${server}/api/v1/conversations/${conversation_id}/messages`, {
+		const res = await fetch(`${process.env.EXPOSED_SERVER_ADDRESS}/api/v1/conversations/${conversation_id}/messages`, {
 			credentials: 'include',
 		})
 		checkPermissions(res)
@@ -245,7 +249,7 @@ export default function Dashboard() {
 	}
 
 	const handleLogOut = async () => {
-		await fetch(`${server}/api/v1/logout`, {
+		await fetch(`${process.env.EXPOSED_SERVER_ADDRESS}/api/v1/logout`, {
 			credentials: 'include',
 		})
 		toast({
@@ -258,7 +262,7 @@ export default function Dashboard() {
 	}
 
 	const checkPermissions = (res: Response) => {
-		if (res.status === 401) setUser(null) 
+		if (res.status === 401) setUser(null)
 	}
 
 	useEffect(() => {
@@ -267,7 +271,7 @@ export default function Dashboard() {
 		}
 		if (user && !isUserLoading) {
 			getAllConversations()
-			setSocket(io(server, { query: { user_id: user.user_id } }))
+			setSocket(io(process.env.EXPOSED_SERVER_ADDRESS, { query: { user_id: user.user_id } }))
 		}
 	}, [user, isUserLoading])
 
@@ -286,18 +290,20 @@ export default function Dashboard() {
 	useEffect(() => {
 		if (!socket) return
 
-		socket.on('message', message =>
-			receiveMessage({ ...message, sent_at: new Date(message.sent_at) }),
-		)
+		const handleSocketMessage = (message: Message) => {
+			receiveMessage({ ...message, sent_at: new Date(message.sent_at) })
+		}
 
-		socket.on('conversation', receiveConversation)
+		const handleSocketConversation = (conversation: Conversation) => {
+			receiveConversation(conversation)
+		}
+
+		socket.on('message', handleSocketMessage)
+		socket.on('conversation', handleSocketConversation)
 
 		return () => {
-			socket.off('message', message =>
-				receiveMessage({ ...message, sent_at: new Date(message.sent_at) }),
-			)
-
-			socket.off('conversation', receiveConversation)
+			socket.off('message', handleSocketMessage)
+			socket.off('conversation', handleSocketConversation)
 		}
 	}, [socket])
 

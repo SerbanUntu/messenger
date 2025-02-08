@@ -6,9 +6,10 @@
 	"type": "module",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"build": "webpack --mode=production",
-		"dev": "webpack serve --open --mode=development",
-		"start": "ts-node src/server/main.ts"
+		"build": "cross-env NODE_ENV=production webpack --mode=production",
+		"dev": "cross-env NODE_ENV=development webpack serve --open --mode=development",
+		"start": "cross-env NODE_ENV=production ts-node src/server/main.ts",
+		"devStart": "cross-env NODE_ENV=development nodemon src/server/main.ts"
 	},
 	"repository": {
 		"type": "git",
@@ -61,6 +62,7 @@
 		"autoprefixer": "^10.4.20",
 		"babel-loader": "^9.2.1",
 		"compression-webpack-plugin": "^11.1.0",
+		"cross-env": "^7.0.3",
 		"css-loader": "^7.1.2",
 		"html-webpack-plugin": "^5.6.3",
 		"postcss": "^8.5.1",

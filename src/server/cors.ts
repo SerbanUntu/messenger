@@ -1,6 +1,4 @@
-import { server } from "../constants.ts";
-
 export default {
-	origin: server,
+	origin: process.env.CORS_ORIGIN,
 	credentials: true
 }

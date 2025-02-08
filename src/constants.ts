@@ -1,1 +1,0 @@
-export const server = 'https://messenger-1094272270680.europe-west4.run.app'

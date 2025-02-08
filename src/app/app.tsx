@@ -8,7 +8,6 @@ import NotFound from './404/page'
 import Dashboard from './dashboard/page'
 import { User } from '../types'
 import UserContext from '../contexts/user-context'
-import { server } from '../constants'
 import Root from './root'
 
 const App = () => {
@@ -16,7 +15,7 @@ const App = () => {
 	const [isUserLoading, setIsUserLoading] = useState(true)
 
 	useEffect(() => {
-		const userPromise = fetch(`${server}/api/v1/users/currentUser`, {
+		const userPromise = fetch(`${process.env.EXPOSED_SERVER_ADDRESS}/api/v1/users/currentUser`, {
 			credentials: 'include',
 		})
 		userPromise.then(res => {

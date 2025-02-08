@@ -1,7 +1,6 @@
 import React, { useContext, useEffect } from 'react'
 import UserForm from '@/src/components/userForm'
 import { NavLink, useNavigate } from 'react-router'
-import { server } from '../../constants'
 import { toast } from '@/src/hooks/use-toast'
 import UserContext from '@/src/contexts/user-context'
 
@@ -11,7 +10,7 @@ export default function SignUp() {
 
 	const onSubmit = async (e: React.FormEvent, username: string, password: string) => {
 		e.preventDefault()
-		const res = await fetch(`${server}/api/v1/users`, {
+		const res = await fetch(`${process.env.EXPOSED_SERVER_ADDRESS}/api/v1/users`, {
 			method: 'POST',
 			body: JSON.stringify({
 				username,

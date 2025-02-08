@@ -35,11 +35,12 @@ export const emitMessage = async (message: Message) => {
 }
 
 export const emitConversation = async (users: User[], conversation: Conversation) => {
-	users.forEach(u => {
-		const socket = sockets.get(u.user_id)
+	// The author is on the last position in the array of users
+	for (let i = 0; i < users.length - 1; i++) {
+		const socket = sockets.get(users[i].user_id)
 		if (socket) {
 			socket.emit('conversation', conversation)
-			console.log(`Conversation created by user ${users[users.length - 1].user_id} received by ${u.user_id}`)
+			console.log(`Conversation created by user ${users[users.length - 1].user_id} received by ${users[i].user_id}`)
 		}
-	})
+	}
 }
